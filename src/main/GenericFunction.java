@@ -41,7 +41,7 @@ public class GenericFunction implements Serializable {
             e.printStackTrace();
         }
     }
-    public static void encode() {
+    private static void encode() {
         try {
             GenericFunction func = new GenericFunction(0, "dothings", 1);
             FileOutputStream f = new FileOutputStream("file.txt");
