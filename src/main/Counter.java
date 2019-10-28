@@ -3,11 +3,15 @@ package main;
 /**
  * Counter
  */
-public class Counter {
+public class Counter extends Object {
     int count;
 
-    public Counter(int count){
-        this.count = count;
+    public Counter(){
+        this.count = 0;
+    }
+
+    public int value() {
+        return count;
     }
 
     public void increment(int val) {
@@ -15,6 +19,6 @@ public class Counter {
     }
 
     public void decrement(int val) {
-        count += val;
+        count -= val;
     }
 }
