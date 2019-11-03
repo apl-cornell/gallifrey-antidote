@@ -1,3 +1,6 @@
+# test file
+file.txt
+
 # Erlang ignore files
 .eunit
 deps

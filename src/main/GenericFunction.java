@@ -2,27 +2,23 @@ package main;
 
 import java.io.*;
 
+import com.ericsson.otp.erlang.OtpErlangBinary;
+
 public class GenericFunction implements Serializable {
     private static final long serialVersionUID = 1L;
-    private int ObjectId;
     private String FunctionName;
-    private int Argument;
+    private OtpErlangBinary Argument;
 
-    public GenericFunction(int ObjectId, String FunctionName, int Argument) {
-        this.ObjectId = ObjectId;
+    public GenericFunction(String FunctionName, OtpErlangBinary Argument) {
         this.FunctionName = FunctionName;
         this.Argument = Argument;
-    }
-
-    public int getObjectId() {
-        return ObjectId;
     }
 
     public String getFunctionName() {
         return FunctionName;
     }
 
-    public int getArgument() {
+    public OtpErlangBinary getArgument() {
         return Argument;
     }
 
@@ -33,9 +29,8 @@ public class GenericFunction implements Serializable {
             FileInputStream f = new FileInputStream("file.txt");
             ObjectInputStream oos = new ObjectInputStream(f);
             func = (GenericFunction) oos.readObject();
-            System.out.println(func.getObjectId());
             System.out.println(func.getFunctionName());
-            System.out.println(func.getArgument());
+            System.out.println(CRDT.bin_to_int(func.getArgument()));
             oos.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -43,7 +38,7 @@ public class GenericFunction implements Serializable {
     }
     private static void encode() {
         try {
-            GenericFunction func = new GenericFunction(0, "dothings", 1);
+            GenericFunction func = new GenericFunction("dothings", CRDT.int_to_bin(1));
             FileOutputStream f = new FileOutputStream("file.txt");
             ObjectOutputStream oos = new ObjectOutputStream(f);
             oos.writeObject(func);
