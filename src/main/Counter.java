@@ -1,11 +1,10 @@
 package main;
 
-import com.ericsson.otp.erlang.OtpErlangBinary;
-
 /**
  * Counter
  */
 public class Counter implements CRDT {
+    private static final long serialVersionUID = 1L;
     int count;
 
     public Counter(int val) {
@@ -28,13 +27,13 @@ public class Counter implements CRDT {
     }
 
     @Override
-    public void invoke(String func, OtpErlangBinary args) {
+    public void invoke(String func, Object args) {
         switch (func) {
         case "increment":
-            increment_bin(args);
+            increment((int) args);
             break;
         case "decrement":
-            decrement_bin(args);
+            decrement((int) args);
             break;
 
         default:
@@ -42,28 +41,20 @@ public class Counter implements CRDT {
         }
     }
 
-    public void increment_bin(OtpErlangBinary args) {
-        increment(CRDT.bin_to_int(args));
-    }
-
-    public void decrement_bin(OtpErlangBinary args) {
-        decrement(CRDT.bin_to_int(args));
-    }
-
     @Override
-    public OtpErlangBinary read() {
-        return CRDT.int_to_bin(value());
+    public Object read() {
+        return value();
     }
 
     public static void main(String[] args) {
         Counter testCounter = new Counter(0);
-        int val = CRDT.bin_to_int(testCounter.read());
+        int val = (int) testCounter.read();
         System.out.println(val);
-        testCounter.invoke("increment", CRDT.int_to_bin(2));
-        int val2 = CRDT.bin_to_int(testCounter.read());
+        testCounter.invoke("increment", 2);
+        int val2 = (int) testCounter.read();
         System.out.println(val2);
-        testCounter.invoke("decrement", CRDT.int_to_bin(1));
-        int val3 = CRDT.bin_to_int(testCounter.read());
+        testCounter.invoke("decrement", 1);
+        int val3 = (int) testCounter.read();
         System.out.println(val3);
 
     }

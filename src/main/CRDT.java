@@ -1,14 +1,16 @@
 package main;
 
+import java.io.Serializable;
+
 import com.ericsson.otp.erlang.OtpErlangBinary;
 
-interface CRDT {
-    void invoke(String func, OtpErlangBinary args);
+interface CRDT extends Serializable{
+    void invoke(String func, Object args);
 
-    OtpErlangBinary read();
+    Object read();
 
     public static int bin_to_int(OtpErlangBinary val) {
-        return (Integer) val.getObject();
+        return (int) val.getObject();
     }
 
     public static OtpErlangBinary int_to_bin(int val) {
