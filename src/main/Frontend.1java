@@ -26,6 +26,12 @@ public class Frontend {
         }
     }
 
+    public void send(GenericKey k, CRDT obj) {
+        try (InteractiveTransaction tx = antidote.startTransaction()) {
+            bucket.update(tx, k.invoke(new OtpErlangBinary(obj)));
+        }
+    }
+
     public int read(GenericKey k){
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             return bucket.read(tx, k);
@@ -34,8 +40,11 @@ public class Frontend {
 
     public static void main(String[] args) {
         Frontend antidote = new Frontend("localhost", 8087, "mybucket");
-        GenericKey k = Key.generic("my_example_counter");
-        GenericFunction f = new GenericFunction(1, "increment", 1);
-        antidote.send(k, f);
+        GenericKey key = Key.generic("my_example_counter");
+        Counter counter = new Counter(0);
+        antidote.send(key, counter);
+        GenericFunction func = new GenericFunction("increment", 2);
+        antidote.send(key, func);
+        antidote.read(key);
     }
 }
