@@ -43,15 +43,14 @@ public class Backend {
     }
 
     public void run(String target) {
+        if (myOtpNode.ping(target, 2000)) {
+            System.out.println("remote is up");
+        } else {
+            System.out.println("remote is not up");
+            // System.exit(1);
+        }
         while (true) {
             try {
-                if (myOtpNode.ping(target, 2000)) {
-                    System.out.println("remote is up");
-                } else {
-                    System.out.println("remote is not up");
-                    // System.exit(1);
-                }
-
                 OtpErlangTuple tuple = (OtpErlangTuple) myOtpMbox.receive();
                 System.out.println("Recieved message");
 
