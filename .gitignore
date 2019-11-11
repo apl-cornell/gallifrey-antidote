@@ -1,6 +1,9 @@
 # test file
 file.txt
 
+#IDE things
+.vscode/
+
 # Erlang ignore files
 .eunit
 deps
