@@ -1,4 +1,6 @@
-# Erlang function to receive messages
+# Notes about erlang messaging
+
+## Erlang function to receive messages
 
 ```erlang
 tester2() ->
@@ -12,7 +14,7 @@ tester2() ->
     end.
 ```
 
-# Erlang shell inputs
+## Erlang shell inputs
 
 ```bash
 erl -sname ErlNode
