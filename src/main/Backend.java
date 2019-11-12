@@ -17,7 +17,7 @@ public class Backend {
     OtpNode myOtpNode = null;
     OtpErlangPid last_pid;
 
-    Map<Integer, CRDT> ObjectTable = new Hashtable<>();
+    Map<OtpErlangBinary, CRDT> ObjectTable = new Hashtable<>();
 
     public Backend(String NodeName, String MailBox) {
         try {
@@ -61,21 +61,23 @@ public class Backend {
                 System.out.println("got payload");
 
                 OtpErlangBinary ERLObjectId = (OtpErlangBinary) payload.elementAt(0);
-                Integer ObjectId = CRDT.bin_to_int(ERLObjectId);
+                System.out.println(ERLObjectId);
                 System.out.println("got object id");
 
                 String status = ((OtpErlangAtom) payload.elementAt(1)).atomValue();
                 System.out.println("got atom status for call");
 
+                System.out.println(status);
+
                 OtpErlangBinary binary = (OtpErlangBinary) payload.elementAt(2);
 
-                if (!ObjectTable.containsKey(ObjectId)) {
+                if (!ObjectTable.containsKey(ERLObjectId)) {
                     System.out.println("new crdt object");
                     assert status.equals("invoke") : "trying to read an object that isn't made yet";
-                    ObjectTable.put(ObjectId, (CRDT) binary.getObject());
+                    ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
                     myOtpMbox.send(last_pid, ERLObjectId);
                 } else {
-                    CRDT crdt_object = ObjectTable.get(ObjectId);
+                    CRDT crdt_object = ObjectTable.get(ERLObjectId);
                     switch (status) {
                     case "read":
                         System.out.println("Doing read call");
@@ -205,16 +207,14 @@ public class Backend {
         }
         while (true) {
             try {
-                OtpErlangTuple msg_invoke = makeErlangMessage(0, "invoke", "increment",
-                        2);
+                OtpErlangTuple msg_invoke = makeErlangMessage(0, "invoke", "increment", 2);
                 System.out.println("sending invoke message");
                 myOtpMbox.send(mailbox, target, msg_invoke);
                 System.out.println("Recieving message");
                 OtpErlangBinary ErlObjectId2 = (OtpErlangBinary) myOtpMbox.receive();
                 decodeErlangMessage(0, ErlObjectId2);
 
-                OtpErlangTuple msg_invoke2 = makeErlangMessage(0, "invoke", "decrement",
-                        1);
+                OtpErlangTuple msg_invoke2 = makeErlangMessage(0, "invoke", "decrement", 1);
                 System.out.println("sending invoke message");
                 myOtpMbox.send(mailbox, target, msg_invoke2);
                 System.out.println("Recieving message");
@@ -234,8 +234,45 @@ public class Backend {
         }
     }
 
+    // Function to help get the erlang binary representation of the blob for testing
+    private void sendbin(OtpErlangBinary bin) {
+        try {
+            OtpErlangTuple tuple = (OtpErlangTuple) myOtpMbox.receive();
+            System.out.println("Recieved message");
+
+            last_pid = (OtpErlangPid) tuple.elementAt(0);
+            System.out.println("sending message");
+            myOtpMbox.send(last_pid, bin);
+        } catch (Exception e) {
+            e.printStackTrace();
+            OtpErlangAtom atom = new OtpErlangAtom("error");
+            myOtpMbox.send(last_pid, atom);
+        }
+    }
+
     public static void main(String[] args) {
-        boolean run = false;
+        boolean run;
+        try {
+            run = Boolean.parseBoolean(args[0]);
+        } catch (Exception e) {
+            run = true;
+        }
+        try {
+            boolean send_binary_test_message = Boolean.parseBoolean(args[1]);
+            if (send_binary_test_message) {
+                Backend backend = new Backend("JavaNode", "javamailbox");
+                // OtpErlangBinary bin = new OtpErlangBinary(new Counter(0));
+                //OtpErlangBinary bin = new OtpErlangBinary(new GenericFunction("decrement", 1));
+                Counter c = new Counter(0);
+                c.increment(1);
+                c.decrement(1);
+                System.out.println(c.value());
+                OtpErlangBinary bin = new OtpErlangBinary(c.value());
+                backend.sendbin(bin);
+                System.exit(0);
+            }
+        } catch (Exception e) {
+        }
         if (run) {
             // Operational
             // Backend backend = new Backend("JavaNode", "javamailbox", "antidote");
