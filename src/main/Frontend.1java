@@ -5,6 +5,7 @@ import java.security.Key;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 
+// Need to setup with antidote-java-client for this package
 import eu.antidotedb.client.*;
 
 
@@ -20,10 +21,15 @@ public class Frontend {
         this.bucket = Bucket.bucket(bucket);
     }
 
+    // may need to do some wrapping around the GenericFunction depending on how GenericKey turns out
     public void send(GenericKey k, GenericFunction f){
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(new OtpErlangBinary(f)));
         }
+    }
+
+    public void static_send(GenericKey k, GenericFunction f){
+        bucket.update(antidote.noTransaction(), k.invoke(new OtpErlangBinary(f)));
     }
 
     public void send(GenericKey k, CRDT obj) {
@@ -32,19 +38,30 @@ public class Frontend {
         }
     }
 
+    public void static_send(GenericKey k, CRDT obj){
+        bucket.update(antidote.noTransaction(), k.invoke(new OtpErlangBinary(obj)));
+    }
+
     public int read(GenericKey k){
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             return bucket.read(tx, k);
         }
     }
 
+    public int static_read(GenericKey k){
+        return bucket.read(antidote.noTransaction(), k);
+    }
+
     public static void main(String[] args) {
-        Frontend antidote = new Frontend("localhost", 8087, "mybucket");
+        Frontend antidote = new Frontend("localhost", 8087, "my_bucket");
         GenericKey key = Key.generic("my_example_counter");
         Counter counter = new Counter(0);
         antidote.send(key, counter);
         GenericFunction func = new GenericFunction("increment", 2);
         antidote.send(key, func);
         antidote.read(key);
+        GenericFunction func = new GenericFunction("increment", 2);
+        antidote.static_send(key, func);
+        antidote.static_read(key);
     }
 }
