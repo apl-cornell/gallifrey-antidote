@@ -2,11 +2,11 @@ package main;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.security.Key;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 
 import eu.antidotedb.client.*;
+import eu.antidotedb.client.Key;
 
 import com.google.protobuf.ByteString;
 
@@ -28,6 +28,9 @@ public class Frontend {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
             out.writeObject(obj);
             return ByteString.copyFrom(bos.toByteArray());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
