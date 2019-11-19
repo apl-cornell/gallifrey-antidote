@@ -1,13 +1,14 @@
 package main;
 
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.security.Key;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 
-// Need to setup with antidote-java-client for this package
 import eu.antidotedb.client.*;
 
+import com.google.protobuf.ByteString;
 
 /**
  * Frontend
@@ -16,39 +17,49 @@ public class Frontend {
 
     AntidoteClient antidote;
     Bucket bucket;
-    public Frontend(String hostname, int port, String bucket){
+
+    public Frontend(String hostname, int port, String bucket) {
         this.antidote = new AntidoteClient(new InetSocketAddress(hostname, port));
         this.bucket = Bucket.bucket(bucket);
     }
 
-    // may need to do some wrapping around the GenericFunction depending on how GenericKey turns out
-    public void send(GenericKey k, GenericFunction f){
-        try (InteractiveTransaction tx = antidote.startTransaction()) {
-            bucket.update(tx, k.invoke(new OtpErlangBinary(f)));
+    public static ByteString custom_serialization(Object obj) {
+        // new OtpErlangBinary
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
+            out.writeObject(obj);
+            return ByteString.copyFrom(bos.toByteArray());
         }
     }
 
-    public void static_send(GenericKey k, GenericFunction f){
-        bucket.update(antidote.noTransaction(), k.invoke(new OtpErlangBinary(f)));
+    // may need to do some wrapping around the GenericFunction depending on how
+    // GenericKey turns out
+    public void send(GenericKey k, GenericFunction f) {
+        try (InteractiveTransaction tx = antidote.startTransaction()) {
+            bucket.update(tx, k.invoke(custom_serialization(f)));
+        }
+    }
+
+    public void static_send(GenericKey k, GenericFunction f) {
+        bucket.update(antidote.noTransaction(), k.invoke(custom_serialization(f)));
     }
 
     public void send(GenericKey k, CRDT obj) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
-            bucket.update(tx, k.invoke(new OtpErlangBinary(obj)));
+            bucket.update(tx, k.invoke(custom_serialization(obj)));
         }
     }
 
-    public void static_send(GenericKey k, CRDT obj){
-        bucket.update(antidote.noTransaction(), k.invoke(new OtpErlangBinary(obj)));
+    public void static_send(GenericKey k, CRDT obj) {
+        bucket.update(antidote.noTransaction(), k.invoke(custom_serialization(obj)));
     }
 
-    public int read(GenericKey k){
+    public Object read(GenericKey k) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             return bucket.read(tx, k);
         }
     }
 
-    public int static_read(GenericKey k){
+    public Object static_read(GenericKey k) {
         return bucket.read(antidote.noTransaction(), k);
     }
 
@@ -60,8 +71,8 @@ public class Frontend {
         GenericFunction func = new GenericFunction("increment", 2);
         antidote.send(key, func);
         antidote.read(key);
-        GenericFunction func = new GenericFunction("increment", 2);
-        antidote.static_send(key, func);
+        GenericFunction func2 = new GenericFunction("increment", 2);
+        antidote.static_send(key, func2);
         antidote.static_read(key);
     }
 }
