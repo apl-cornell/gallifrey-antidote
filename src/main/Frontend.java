@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import com.ericsson.otp.erlang.OtpErlangBinary;
 
 import eu.antidotedb.client.*;
-import eu.antidotedb.client.Key;
 
 import com.google.protobuf.ByteString;
 
@@ -70,10 +69,10 @@ public class Frontend {
         Frontend antidote = new Frontend("localhost", 8087, "my_bucket");
         GenericKey key = Key.generic("my_example_counter");
         Counter counter = new Counter(0);
-        antidote.send(key, counter);
+        antidote.static_send(key, counter);
         GenericFunction func = new GenericFunction("increment", 2);
-        antidote.send(key, func);
-        antidote.read(key);
+        antidote.static_send(key, func);
+        antidote.static_read(key);
         GenericFunction func2 = new GenericFunction("increment", 2);
         antidote.static_send(key, func2);
         antidote.static_read(key);
