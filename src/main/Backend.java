@@ -74,8 +74,12 @@ public class Backend {
                 if (!ObjectTable.containsKey(ERLObjectId)) {
                     System.out.println("new crdt object");
                     assert status.equals("invoke") : "trying to read an object that isn't made yet";
-                    ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
-                    myOtpMbox.send(last_pid, ERLObjectId);
+		    try{
+			ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
+		    }catch(NullPointerException e){
+			e.printStackTrace();
+		    }
+		    myOtpMbox.send(last_pid, ERLObjectId);
                 } else {
                     CRDT crdt_object = ObjectTable.get(ERLObjectId);
                     switch (status) {
@@ -86,11 +90,15 @@ public class Backend {
 
                     case "invoke":
                         System.out.println("Doing invoke call");
-                        GenericFunction func = (GenericFunction) binary.getObject();
-                        String name = func.getFunctionName();
-                        System.out.println("Doing " + name);
-                        Object args = func.getArgument();
-                        crdt_object.invoke(name, args);
+			try {
+			    GenericFunction func = (GenericFunction) binary.getObject();
+			    String name = func.getFunctionName();
+			    System.out.println("Doing " + name);
+			    Object args = func.getArgument();
+			    crdt_object.invoke(name, args);
+			}catch(ClassCastException e){
+			    System.out.println("Did this already");
+			}
                         myOtpMbox.send(last_pid, ERLObjectId);
                         break;
                     }
