@@ -1,5 +1,5 @@
 all:
-	javac -cp .:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-2.4.1.jar:lib/jinterface-1.6.1.jar src/main/*.java
+	javac -cp .:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-3.11.0-rc-1.jar:lib/jinterface-1.6.1.jar src/main/*.java
 
 counter:
 	java -cp .:src:lib/jinterface-1.6.1.jar main.Counter

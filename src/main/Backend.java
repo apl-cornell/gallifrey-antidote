@@ -278,8 +278,8 @@ public class Backend {
             // Backend backend = new Backend("JavaNode", "javamailbox", "antidote");
             // backend.run("antidote@127.0.0.1");
             // Testing
-            Backend backend = new Backend("JavaNode", "javamailbox");
-            backend.run("antidote");
+            Backend backend = new Backend("JavaNode@127.0.0.1", "javamailbox", "antidote");
+            backend.run("antidote@127.0.0.1");
         } else {
             Backend backend = new Backend("antidote", "erlmailbox");
             backend.test("javamailbox", "JavaNode@dhcp-rhodes-1236");
