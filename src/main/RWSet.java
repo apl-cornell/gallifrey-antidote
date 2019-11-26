@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 /**
- * RWSet
+ * Remove Wins Set
  */
 public class RWSet implements CRDT {
     private static final long serialVersionUID = 1L;
@@ -56,13 +56,13 @@ public class RWSet implements CRDT {
 
     public static void main(String[] args) {
         RWSet testSet = new RWSet();
-        Set<Object> val = (Set<Object>)testSet.read();
+        Set<Integer> val = (Set<Integer>)testSet.read();
         System.out.println(val);
         testSet.invoke("add", 2);
-        Set<Object> val2 = (Set<Object>)testSet.read();
+        Set<Integer> val2 = (Set<Integer>)testSet.read();
         System.out.println(val2);
         testSet.invoke("remove", 2);
-        Set<Object> val3 = (Set<Object>)testSet.read();
+        Set<Integer> val3 = (Set<Integer>)testSet.read();
         System.out.println(val3);
 
     }
