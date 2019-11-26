@@ -33,12 +33,22 @@ public class Frontend {
         }
     }
 
+    public static Object custom_deserialization(ByteString bs){
+	try(ByteArrayInputStream in = new ByteArrayInputStream(bs.toByteArray()); ObjectInputStream is = new ObjectInputStream(in)) {
+	    return is.readObject();
+	} catch(IOException | ClassNotFoundException e) {
+	    e.printStackTrace();
+	    throw new RuntimeException(e);
+	}
+    }
+    
     // may need to do some wrapping around the GenericFunction depending on how
     // GenericKey turns out
     public void send(GenericKey k, GenericFunction f) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(f)));
-        }
+	    tx.commitTransaction();
+	}
     }
 
     public void static_send(GenericKey k, GenericFunction f) {
@@ -48,6 +58,7 @@ public class Frontend {
     public void send(GenericKey k, CRDT obj) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(obj)));
+	    tx.commitTransaction();
         }
     }
 
@@ -57,12 +68,12 @@ public class Frontend {
 
     public Object read(GenericKey k) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
-            return bucket.read(tx, k);
+            return custom_deserialization(bucket.read(tx, k));
         }
     }
 
     public Object static_read(GenericKey k) {
-        return bucket.read(antidote.noTransaction(), k);
+        return custom_deserialization(bucket.read(antidote.noTransaction(), k));
     }
 
     public static void main(String[] args) {
@@ -72,9 +83,9 @@ public class Frontend {
         antidote.static_send(key, counter);
         GenericFunction func = new GenericFunction("increment", 2);
         antidote.static_send(key, func);
-        antidote.static_read(key);
-        GenericFunction func2 = new GenericFunction("increment", 2);
+        //System.out.println(antidote.static_read(key));
+        GenericFunction func2 = new GenericFunction("decrement", 1);
         antidote.static_send(key, func2);
-        antidote.static_read(key);
+        System.out.println((Integer)antidote.read(key));
     }
 }
