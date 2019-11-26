@@ -28,6 +28,11 @@ public class RWSet implements CRDT {
         addset.add(elem);
         System.out.println("did add");
     }
+    public void addSet(Set<Object> elems) {
+        for (Object elem: elems.toArray()){
+            addset.add(elem);
+        }
+    }
 
     public void remove(Object elem) {
         removeset.add(elem);
@@ -42,6 +47,9 @@ public class RWSet implements CRDT {
             break;
         case "remove":
             remove(args);
+            break;
+        case "addSet":
+            addSet((Set<Object>)args);
             break;
 
         default:
@@ -64,6 +72,14 @@ public class RWSet implements CRDT {
         testSet.invoke("remove", 2);
         Set<Integer> val3 = (Set<Integer>)testSet.read();
         System.out.println(val3);
+
+        Set<Integer> smallSet = new HashSet<Integer>();
+        smallSet.add(4);
+        smallSet.add(5);
+
+        testSet.invoke("addSet", smallSet);
+        Set<Integer> val4 = (Set<Integer>) testSet.read();
+        System.out.println(val4);
 
     }
 }
