@@ -32,6 +32,10 @@ public class Backend {
 
     public Backend(String NodeName, String MailBox, String cookie) {
         try {
+            // KEEP THIS
+            // If the next line raises an exception, you need to get empd running
+            // Do something like `erl -sname whatever` to check and get it running if not
+            // KEEP THIS
             myOtpNode = new OtpNode(NodeName);
             System.out.println(myOtpNode);
             myOtpNode.setCookie(cookie);
@@ -74,12 +78,13 @@ public class Backend {
                 if (!ObjectTable.containsKey(ERLObjectId)) {
                     System.out.println("new crdt object");
                     assert status.equals("invoke") : "trying to read an object that isn't made yet";
-		    try{
-			ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
-		    }catch(NullPointerException e){
-			e.printStackTrace();
-		    }
-		    myOtpMbox.send(last_pid, ERLObjectId);
+                    try {
+                        ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
+                    } catch (NullPointerException e) {
+                        // See if we can get the object resent here
+                        e.printStackTrace();
+                    }
+                    myOtpMbox.send(last_pid, ERLObjectId);
                 } else {
                     CRDT crdt_object = ObjectTable.get(ERLObjectId);
                     switch (status) {
@@ -90,17 +95,28 @@ public class Backend {
 
                     case "invoke":
                         System.out.println("Doing invoke call");
-			try {
-			    GenericFunction func = (GenericFunction) binary.getObject();
-			    String name = func.getFunctionName();
-			    System.out.println("Doing " + name);
-			    Object args = func.getArgument();
-			    crdt_object.invoke(name, args);
-			}catch(ClassCastException e){
-			    System.out.println("Did this already");
-			}
+                        try {
+                            GenericFunction func = (GenericFunction) binary.getObject();
+                            System.out.println("Doing invoke");
+                            crdt_object.invoke(func);
+                        } catch (ClassCastException e) {
+                            System.out.println("Did this already");
+                        }
                         myOtpMbox.send(last_pid, ERLObjectId);
                         break;
+
+                    case "snapshot":
+                        System.out.println("Doing antidote snapshot update");
+                        crdt_object.snapshot();
+                        byte[] b = new byte[20];
+                        OptErlang new_key = new OptErlangBinary(new Random().nextBytes(b));
+                        ObjectTable.remove(ERLObjectId);
+                        ObjectTable.put(new_key, crdt_object);
+                        OtpErlangObject[] emptypayload = new OtpErlangObject[2];
+                        emptypayload[0] = new_key;
+                        emptypayload[1] = new OtpErlangBinary(crdt_object);
+                        OtpErlangTuple new_snapshopt = new OtpErlangTuple(emptypayload);
+                        myOtpMbox.send(last_pid, new_snapshopt);
                     }
                 }
             } catch (Exception e) {
@@ -195,7 +211,7 @@ public class Backend {
     private void test(String mailbox, String target) {
         while (true) {
             try {
-                if (myOtpNode.ping("JavaNode", 2000)) {
+                if (myOtpNode.ping(target, 2000)) {
                     System.out.println("remote is up");
                     OtpErlangTuple msg_init = makeErlangMessage(0, "invoke", new OtpErlangBinary(new Counter(0)));
                     System.out.println("sending message");
@@ -270,7 +286,8 @@ public class Backend {
             if (send_binary_test_message) {
                 Backend backend = new Backend("JavaNode", "javamailbox");
                 // OtpErlangBinary bin = new OtpErlangBinary(new Counter(0));
-                //OtpErlangBinary bin = new OtpErlangBinary(new GenericFunction("decrement", 1));
+                // OtpErlangBinary bin = new OtpErlangBinary(new GenericFunction("decrement",
+                // 1));
                 Counter c = new Counter(0);
                 c.increment(1);
                 c.decrement(1);
@@ -282,15 +299,11 @@ public class Backend {
         } catch (Exception e) {
         }
         if (run) {
-            // Operational
-            // Backend backend = new Backend("JavaNode", "javamailbox", "antidote");
-            // backend.run("antidote@127.0.0.1");
-            // Testing
             Backend backend = new Backend("JavaNode@127.0.0.1", "javamailbox", "antidote");
             backend.run("antidote@127.0.0.1");
         } else {
-            Backend backend = new Backend("antidote", "erlmailbox");
-            backend.test("javamailbox", "JavaNode@dhcp-rhodes-1236");
+            Backend backend = new Backend("antidote@127.0.0.1", "erlmailbox", "antidote");
+            backend.test("javamailbox", "JavaNode@127.0.0.1");
         }
     }
 }
