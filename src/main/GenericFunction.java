@@ -1,6 +1,7 @@
 package main;
 
 import java.io.*;
+import java.util.Random;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 
@@ -8,10 +9,12 @@ public class GenericFunction implements Serializable {
     private static final long serialVersionUID = 1L;
     private String FunctionName;
     private Object Argument;
+    private Integer Id;
 
     public GenericFunction(String FunctionName, Object Argument) {
         this.FunctionName = FunctionName;
         this.Argument = Argument;
+        this.Id = new Random().nextInt(10000000);
     }
 
     public String getFunctionName() {
@@ -20,6 +23,10 @@ public class GenericFunction implements Serializable {
 
     public Object getArgument() {
         return Argument;
+    }
+
+    public Integer getId() {
+        return Id;
     }
 
     public static void main(String[] args) {

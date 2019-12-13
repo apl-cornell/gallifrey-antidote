@@ -8,10 +8,14 @@ import java.util.HashSet;
  */
 public class RWSet implements CRDT {
     private static final long serialVersionUID = 1L;
-    Set<Object> addset = new HashSet<Object>();
-    Set<Object> removeset = new HashSet<Object>();
+    private Set<Object> addset;
+    private Set<Object> removeset;
+    private Set<Integer> IdSet;
 
     public RWSet() {
+        addset = new HashSet<Object>();
+        removeset = new HashSet<Object>();
+        IdSet = new HashSet<>();
     }
 
     public Set<Object> value() {
@@ -40,7 +44,16 @@ public class RWSet implements CRDT {
     }
 
     @Override
-    public void invoke(String func, Object args) {
+    public void invoke(GenericFunction obj) {
+        String func = obj.getFunctionName();
+        Object args = obj.getArgument();
+        Integer id = obj.getId();
+        if (IdSet.contains(id)) {
+            System.out.println("We have already done this");
+            return;
+        } else {
+            IdSet.add(id);
+        }
         switch (func) {
         case "add":
             add(args);
@@ -62,14 +75,21 @@ public class RWSet implements CRDT {
         return value();
     }
 
+    @Override
+    public void snapshot() {
+        IdSet = new HashSet<>();
+    }
+
     public static void main(String[] args) {
         RWSet testSet = new RWSet();
         Set<Integer> val = (Set<Integer>)testSet.read();
         System.out.println(val);
-        testSet.invoke("add", 2);
+        GenericFunction func1 = new GenericFunction("add", 2);
+        testSet.invoke(func1);
         Set<Integer> val2 = (Set<Integer>)testSet.read();
         System.out.println(val2);
-        testSet.invoke("remove", 2);
+        GenericFunction func2 = new GenericFunction("remove", 2);
+        testSet.invoke(func2);
         Set<Integer> val3 = (Set<Integer>)testSet.read();
         System.out.println(val3);
 
@@ -77,7 +97,8 @@ public class RWSet implements CRDT {
         smallSet.add(4);
         smallSet.add(5);
 
-        testSet.invoke("addSet", smallSet);
+        GenericFunction func3 = new GenericFunction("addSet", smallSet);
+        testSet.invoke(func3);
         Set<Integer> val4 = (Set<Integer>) testSet.read();
         System.out.println(val4);
 
