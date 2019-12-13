@@ -41,7 +41,7 @@ public class Frontend {
 	    throw new RuntimeException(e);
 	}
     }
-    
+
     // may need to do some wrapping around the GenericFunction depending on how
     // GenericKey turns out
     public void send(GenericKey k, GenericFunction f) {
@@ -83,7 +83,7 @@ public class Frontend {
         antidote.static_send(key, counter);
         GenericFunction func = new GenericFunction("increment", 2);
         antidote.static_send(key, func);
-        //System.out.println(antidote.static_read(key));
+        System.out.println(antidote.static_read(key));
         GenericFunction func2 = new GenericFunction("decrement", 1);
         antidote.static_send(key, func2);
         System.out.println((Integer)antidote.read(key));
