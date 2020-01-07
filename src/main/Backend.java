@@ -2,6 +2,7 @@ package main;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Random;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangAtom;
@@ -109,7 +110,8 @@ public class Backend {
                         System.out.println("Doing antidote snapshot update");
                         crdt_object.snapshot();
                         byte[] b = new byte[20];
-                        OptErlang new_key = new OptErlangBinary(new Random().nextBytes(b));
+			new Random().nextBytes(b);
+                        OtpErlangBinary new_key = new OtpErlangBinary(b);
                         ObjectTable.remove(ERLObjectId);
                         ObjectTable.put(new_key, crdt_object);
                         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
