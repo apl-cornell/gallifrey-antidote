@@ -114,8 +114,7 @@ public class Backend {
                         System.out.println("Doing antidote snapshot update");
                         crdt_object.snapshot();
                         byte[] b = new byte[20];
-                        Random r = new Random();
-                        r.nextBytes(b);
+                        new Random().nextBytes(b);
                         OtpErlangBinary new_key = new OtpErlangBinary(b);
                         ObjectTable.remove(ERLObjectId);
                         ObjectTable.put(new_key, crdt_object);
