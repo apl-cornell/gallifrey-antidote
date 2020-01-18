@@ -5,8 +5,6 @@ Gallifrey implementation over the Antidote system
 ## installation
 
 ```bash
-set -e
-
 git clone https://github.com/apl-cornell/antidote.git
 git clone https://github.com/apl-cornell/gallifrey-antidote
 git clone https://github.com/apl-cornell/antidote-java-client
@@ -16,9 +14,11 @@ mkdir _checkouts
 git clone https://github.com/apl-cornell/antidote_crdt.git _checkouts/antidote_crdt
 git clone https://github.com/apl-cornell/antidote_pb_codec.git _checkouts/antidote_pb_codec
 
-make compile
+sudo make compile
 
 cd ..
+
+## you may need to run ```sudo make shell``` in a seperate terminal for the next step in the antidote directory to run tests.
 
 cd antidote-java-client
 ./gradlew build
