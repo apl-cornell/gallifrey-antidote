@@ -2,6 +2,7 @@ package main;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Random;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangAtom;
@@ -77,14 +78,18 @@ public class Backend {
 
                 if (!ObjectTable.containsKey(ERLObjectId)) {
                     System.out.println("new crdt object");
-                    assert status.equals("invoke") : "trying to read an object that isn't made yet";
+                    // not true anymore
+                    // assert status.equals("invoke") : "trying to read an object that isn't made
+                    // yet";
                     try {
                         ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
+                        myOtpMbox.send(last_pid, ERLObjectId);
                     } catch (NullPointerException e) {
                         // See if we can get the object resent here
+                        OtpErlangAtom atom = new OtpErlangAtom("getobject");
+                        myOtpMbox.send(last_pid, atom);
                         e.printStackTrace();
                     }
-                    myOtpMbox.send(last_pid, ERLObjectId);
                 } else {
                     CRDT crdt_object = ObjectTable.get(ERLObjectId);
                     switch (status) {
@@ -109,14 +114,16 @@ public class Backend {
                         System.out.println("Doing antidote snapshot update");
                         crdt_object.snapshot();
                         byte[] b = new byte[20];
-                        OptErlang new_key = new OptErlangBinary(new Random().nextBytes(b));
+                        Random r = new Random();
+                        r.nextBytes(b);
+                        OtpErlangBinary new_key = new OtpErlangBinary(b);
                         ObjectTable.remove(ERLObjectId);
                         ObjectTable.put(new_key, crdt_object);
                         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
                         emptypayload[0] = new_key;
                         emptypayload[1] = new OtpErlangBinary(crdt_object);
-                        OtpErlangTuple new_snapshopt = new OtpErlangTuple(emptypayload);
-                        myOtpMbox.send(last_pid, new_snapshopt);
+                        OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
+                        myOtpMbox.send(last_pid, new_snapshot);
                     }
                 }
             } catch (Exception e) {
@@ -129,6 +136,8 @@ public class Backend {
             }
         }
     }
+
+    // The methods below are used in testing
 
     private OtpErlangTuple makeErlangMessage(int objid, String status, String functionName, Object argument) {
         assert status.equals("invoke");
