@@ -26,14 +26,14 @@ cd ..
 
 cd gallifrey-antidote
 make all
-
-...
 ```
 
 ## running
 
-To start antidote instance: ```make shell```
+To start antidote instance: ```sudo make shell```
+
 To start gallifrey backend: ```make backend```
+
 To run example frontend code: ```make frontend```
 
 ## troubleshooting
