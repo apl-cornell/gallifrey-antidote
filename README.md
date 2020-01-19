@@ -41,4 +41,4 @@ To run example frontend code: ```make frontend```
 If you get something like:
 ```java.io.IOException: Nameserver not responding on 127.0.0.1 when publishing JavaNode```
 
-You need to run ```erl -sname putwhateveryouwant``` and then exit to open erlang epmd running
+You need to run ```erl -sname putwhateveryouwant``` and then exit to get erlang epmd running
