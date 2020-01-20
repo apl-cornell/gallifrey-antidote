@@ -84,7 +84,7 @@ public class Backend {
                     try {
                         ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
                         myOtpMbox.send(last_pid, ERLObjectId);
-                    } catch (NullPointerException e) {
+                    } catch (NullPointerException | ClassCastException e) {
                         // See if we can get the object resent here
                         OtpErlangAtom atom = new OtpErlangAtom("getobject");
                         myOtpMbox.send(last_pid, atom);
@@ -293,14 +293,15 @@ public class Backend {
             boolean send_binary_test_message = Boolean.parseBoolean(args[1]);
             if (send_binary_test_message) {
                 Backend backend = new Backend("JavaNode", "javamailbox");
-                // OtpErlangBinary bin = new OtpErlangBinary(new Counter(0));
-                // OtpErlangBinary bin = new OtpErlangBinary(new GenericFunction("decrement",
+                OtpErlangBinary bin = new OtpErlangBinary(new Counter(0));
+                // OtpErlangBinary bin = new OtpErlangBinary(new GenericFunction("increment",
                 // 1));
-                Counter c = new Counter(0);
-                c.increment(1);
-                c.decrement(1);
-                System.out.println(c.value());
-                OtpErlangBinary bin = new OtpErlangBinary(c.value());
+
+                /*
+                 * Counter c = new Counter(0); c.increment(1); c.decrement(1);
+                 * System.out.println(c.value()); OtpErlangBinary bin = new
+                 * OtpErlangBinary(c.value());
+                 */
                 backend.sendbin(bin);
                 System.exit(0);
             }
