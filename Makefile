@@ -13,6 +13,9 @@ function:
 backend:
 	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend True
 
+backend2:
+	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend True False False
+
 test:
 	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend False
 

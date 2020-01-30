@@ -66,7 +66,7 @@ public class Backend {
                 System.out.println("got payload");
 
                 OtpErlangBinary ERLObjectId = (OtpErlangBinary) payload.elementAt(0);
-                System.out.println(ERLObjectId);
+                System.out.println(ERLObjectId.binaryValue());
                 System.out.println("got object id");
 
                 String status = ((OtpErlangAtom) payload.elementAt(1)).atomValue();
@@ -82,7 +82,8 @@ public class Backend {
                     // assert status.equals("invoke") : "trying to read an object that isn't made
                     // yet";
                     try {
-                        ObjectTable.put(ERLObjectId, (CRDT) binary.getObject());
+                        CRDT thing = (CRDT) binary.getObject();
+                        ObjectTable.put(ERLObjectId, thing);
                         myOtpMbox.send(last_pid, ERLObjectId);
                     } catch (NullPointerException | ClassCastException e) {
                         // See if we can get the object resent here
@@ -308,8 +309,23 @@ public class Backend {
         } catch (Exception e) {
         }
         if (run) {
-            Backend backend = new Backend("JavaNode@127.0.0.1", "javamailbox", "antidote");
-            backend.run("antidote@127.0.0.1");
+            boolean usemain;
+            try {
+                usemain = Boolean.parseBoolean(args[2]);
+            } catch (Exception e) {
+                usemain = true;
+            }
+            String nodename;
+            String target;
+            if (usemain) {
+                nodename = "JavaNode@127.0.0.1";
+                target = "antidote@127.0.0.1";
+            } else {
+                nodename = "JavaNode2@127.0.0.1";
+                target = "antidote2@127.0.0.1";
+            }
+            Backend backend = new Backend(nodename, "javamailbox", "antidote");
+            backend.run(target);
         } else {
             Backend backend = new Backend("antidote@127.0.0.1", "erlmailbox", "antidote");
             backend.test("javamailbox", "JavaNode@127.0.0.1");

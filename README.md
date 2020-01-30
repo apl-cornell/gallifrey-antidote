@@ -36,6 +36,16 @@ To start gallifrey backend: ```make backend```
 
 To run example frontend code: ```make frontend```
 
+To connect to antidote shells:
+
+```erlang
+{ok, Descriptor1} = rpc:call('antidote@127.0.0.1', antidote_dc_manager, get_connection_descriptor, []),
+{ok, Descriptor2} = rpc:call('antidote2@127.0.0.1', antidote_dc_manager, get_connection_descriptor, []),
+Descriptors = [Descriptor1, Descriptor2],
+rpc:call('antidote@127.0.0.1', antidote_dc_manager, subscribe_updates_from, [Descriptors]),
+rpc:call('antidote@127.0.0.1', antidote_dc_manager, subscribe_updates_from, [Descriptors]).
+```
+
 ## troubleshooting
 
 If you get something like:
