@@ -21,7 +21,7 @@ cd ..
 ## you may need to run ```sudo make shell``` in a seperate terminal for the next step in the antidote directory to run tests.
 
 cd antidote-java-client
-./gradlew build
+./gradlew build ## Alternatively you can use ```gradle build -x test```
 cd ..
 
 cd gallifrey-antidote
@@ -46,6 +46,18 @@ antidote@127.0.0.1
 Descriptors = [Descriptor1, Descriptor2],
 rpc:call('antidote@127.0.0.1', antidote_dc_manager, subscribe_updates_from, [Descriptors]),
 rpc:call('antidote2@127.0.0.1', antidote_dc_manager, subscribe_updates_from, [Descriptors]).
+```
+
+Around the world test
+
+Sub in for correct ip's of choice after @
+
+```erlang
+{ok, Descriptor1} = rpc:call('antidote@10.132.9.129', antidote_dc_manager, get_connection_descriptor, []),
+{ok, Descriptor2} = rpc:call('antidote@128.253.3.197', antidote_dc_manager, get_connection_descriptor, []),
+Descriptors = [Descriptor1, Descriptor2],
+rpc:call('antidote@10.132.9.129', antidote_dc_manager, subscribe_updates_from, [Descriptors]),
+rpc:call('antidote@128.253.3.197', antidote_dc_manager, subscribe_updates_from, [Descriptors]).
 ```
 
 ## troubleshooting
