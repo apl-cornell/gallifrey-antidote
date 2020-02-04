@@ -63,7 +63,7 @@ public class Counter implements CRDT {
 
     @Override
     public void snapshot() {
-        IdSet = new HashSet<>();
+        //IdSet = new HashSet<>();
     }
 
     public static void main(String[] args) {

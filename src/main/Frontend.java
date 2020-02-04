@@ -33,13 +33,14 @@ public class Frontend {
         }
     }
 
-    public static Object custom_deserialization(ByteString bs){
-	try(ByteArrayInputStream in = new ByteArrayInputStream(bs.toByteArray()); ObjectInputStream is = new ObjectInputStream(in)) {
-	    return is.readObject();
-	} catch(IOException | ClassNotFoundException e) {
-	    e.printStackTrace();
-	    throw new RuntimeException(e);
-	}
+    public static Object custom_deserialization(ByteString bs) {
+        try (ByteArrayInputStream in = new ByteArrayInputStream(bs.toByteArray());
+                ObjectInputStream is = new ObjectInputStream(in)) {
+            return is.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
     // may need to do some wrapping around the GenericFunction depending on how
@@ -47,8 +48,8 @@ public class Frontend {
     public void send(GenericKey k, GenericFunction f) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(f)));
-	    tx.commitTransaction();
-	}
+            tx.commitTransaction();
+        }
     }
 
     public void static_send(GenericKey k, GenericFunction f) {
@@ -58,7 +59,7 @@ public class Frontend {
     public void send(GenericKey k, CRDT obj) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(obj)));
-	    tx.commitTransaction();
+            tx.commitTransaction();
         }
     }
 
@@ -77,15 +78,29 @@ public class Frontend {
     }
 
     public static void main(String[] args) {
-        Frontend antidote = new Frontend("localhost", 8087, "my_bucket");
+        boolean run;
+        try {
+            run = Boolean.parseBoolean(args[0]);
+        } catch (Exception e) {
+            run = true;
+        }
+        Frontend antidote;
+        if (run){
+            antidote = new Frontend("localhost", 8087, "my_bucket");
+        }
+        else {
+            antidote = new Frontend("localhost", 8287, "my_bucket");
+        }
         GenericKey key = Key.generic("my_example_counter");
         Counter counter = new Counter(0);
         antidote.static_send(key, counter);
-        GenericFunction func = new GenericFunction("increment", 2);
-        antidote.static_send(key, func);
-        System.out.println(antidote.static_read(key));
-        GenericFunction func2 = new GenericFunction("decrement", 1);
-        antidote.static_send(key, func2);
-        System.out.println((Integer)antidote.read(key));
+        for (int i = 1; i <= 10; i++) {
+            GenericFunction func = new GenericFunction("increment", 2);
+            antidote.static_send(key, func);
+            System.out.println(antidote.static_read(key));
+            GenericFunction func2 = new GenericFunction("decrement", 1);
+            antidote.static_send(key, func2);
+            System.out.println((Integer) antidote.read(key));
+        }
     }
 }

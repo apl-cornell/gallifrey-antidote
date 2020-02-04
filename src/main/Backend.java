@@ -85,11 +85,18 @@ public class Backend {
                         CRDT thing = (CRDT) binary.getObject();
                         ObjectTable.put(ERLObjectId, thing);
                         myOtpMbox.send(last_pid, ERLObjectId);
-                    } catch (NullPointerException | ClassCastException e) {
+                        System.out.println("We added the object");
+                    } catch (ClassCastException e) {
+                        // We got a Generic function so we missed the object initialization
                         // See if we can get the object resent here
                         OtpErlangAtom atom = new OtpErlangAtom("getobject");
                         myOtpMbox.send(last_pid, atom);
-                        e.printStackTrace();
+                        System.out.println("We need to get the object becuse we don't have it");
+                    } catch (NullPointerException e) {
+                        // This is the very start of the object before an invoke has been called
+                        // We will not add the object and wait for the next message which should be init
+                        myOtpMbox.send(last_pid, ERLObjectId);
+                        System.out.println("The object is still in the pipeline so we have to wait to get it");
                     }
                 } else {
                     CRDT crdt_object = ObjectTable.get(ERLObjectId);
@@ -117,7 +124,7 @@ public class Backend {
                         byte[] b = new byte[20];
                         new Random().nextBytes(b);
                         OtpErlangBinary new_key = new OtpErlangBinary(b);
-                        ObjectTable.remove(ERLObjectId);
+                        //ObjectTable.remove(ERLObjectId);
                         ObjectTable.put(new_key, crdt_object);
                         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
                         emptypayload[0] = new_key;
