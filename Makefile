@@ -1,34 +1,34 @@
-all:
-	javac -cp .:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-3.11.0-rc-1.jar:lib/jinterface-1.6.1.jar src/main/*.java
+all: build
 
-build: all
+build:
+	./gradlew build
 
 counter:
-	java -cp .:src main.Counter
+	./gradlew -PmainClass=Counter execute
 
 rwset:
-	java -cp .:src main.RWSet
+	./gradlew -PmainClass=RWSet execute
 
 function:
-	java -cp .:src:lib/jinterface-1.6.1.jar main/GenericFunction
+	./gradlew -PmainClass=GenericFunction execute
 
 backend:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend True
+	./gradlew -PmainClass=Backend execute --args=True
 
 backend2:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend True False False
+	./gradlew -PmainClass=Backend execute --args='True False False'
 
 test:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend False
+	./gradlew -PmainClass=Backend execute --args=False
 
 send:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend False True
+	./gradlew -PmainClass=Backend execute --args='False True'
 
 frontend:
-	java -cp .:src:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-3.11.0-rc-1.jar:lib/jinterface-1.6.1.jar main.Frontend True
+	./gradlew -PmainClass=Frontend execute --args=True
 
 frontend2:
-	java -cp .:src:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-3.11.0-rc-1.jar:lib/jinterface-1.6.1.jar main.Frontend False
+	./gradlew -PmainClass=Frontend execute --args=False
 
 clean:
-	rm src/main/*.class
+	./gradlew clean
