@@ -5,9 +5,10 @@ Gallifrey implementation over the Antidote system
 ## installation
 
 ```bash
+## Note, I've added the gallifrey version of antidote-java-client to gallifrey-antidote as a jar file since antidote-java-client seems rather stable. If you want to make changes to the antidote-java-client, include the commented out code, create a new jar from your changes to antidote-java-client and add the jar file to gallifrey-antidote/lib as ```antidote-java-client-gallifrey.jar```
 git clone https://github.com/apl-cornell/antidote.git
 git clone https://github.com/apl-cornell/gallifrey-antidote
-git clone https://github.com/apl-cornell/antidote-java-client
+#git clone https://github.com/apl-cornell/antidote-java-client
 
 cd antidote
 mkdir _checkouts
@@ -20,9 +21,9 @@ cd ..
 
 ## you may need to run ```sudo make shell``` in a seperate terminal for the next step in the antidote directory to run tests.
 
-cd antidote-java-client
-./gradlew build ## Alternatively you can use ```gradle build -x test```
-cd ..
+#cd antidote-java-client
+#./gradlew build ## Alternatively you can use ```gradle build -x test```
+#cd ..
 
 cd gallifrey-antidote
 make all

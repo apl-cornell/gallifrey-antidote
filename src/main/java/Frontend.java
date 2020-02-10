@@ -1,5 +1,3 @@
-package main;
-
 import java.io.*;
 import java.net.InetSocketAddress;
 
@@ -85,10 +83,9 @@ public class Frontend {
             run = true;
         }
         Frontend antidote;
-        if (run){
+        if (run) {
             antidote = new Frontend("localhost", 8087, "my_bucket");
-        }
-        else {
+        } else {
             antidote = new Frontend("localhost", 8287, "my_bucket");
         }
         GenericKey key = Key.generic("my_example_counter");

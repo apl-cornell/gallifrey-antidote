@@ -1,5 +1,3 @@
-package main;
-
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Random;
