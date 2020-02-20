@@ -7,141 +7,65 @@ import java.util.Random;
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangPid;
-import com.ericsson.otp.erlang.OtpErlangString;
 import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpErlangObject;
-import com.ericsson.otp.erlang.OtpMbox;
-import com.ericsson.otp.erlang.OtpNode;
 
-public class Backend {
-    OtpMbox myOtpMbox = null;
-    OtpNode myOtpNode = null;
-    OtpErlangPid last_pid;
+public class Backend extends AntidoteBackend{
 
     Map<OtpErlangBinary, CRDT> ObjectTable = new Hashtable<>();
 
-    public Backend(String NodeName, String MailBox) {
-        try {
-            myOtpNode = new OtpNode(NodeName);
-            System.out.println(myOtpNode);
-            myOtpMbox = myOtpNode.createMbox();
-            myOtpMbox.registerName(MailBox);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public Backend(String NodeName, String MailBox, String cookie){
+        super(NodeName, MailBox, cookie);
     }
 
-    public Backend(String NodeName, String MailBox, String cookie) {
-        try {
-            // KEEP THIS
-            // If the next line raises an exception, you need to get empd running
-            // Do something like `erl -sname whatever` to check and get it running if not
-            // KEEP THIS
-            myOtpNode = new OtpNode(NodeName);
-            System.out.println(myOtpNode);
-            myOtpNode.setCookie(cookie);
-            myOtpMbox = myOtpNode.createMbox();
-            myOtpMbox.registerName(MailBox);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public OtpErlangBinary value(OtpErlangBinary JavaObjectId){
+        // assert that object is in table else request it
+        CRDT crdt_object = ObjectTable.get(JavaObjectId);
+        return new OtpErlangBinary(crdt_object.read());
     }
 
-    public void run(String target) {
-        if (myOtpNode.ping(target, 2000)) {
-            System.out.println("remote is up");
-        } else {
-            System.out.println("remote is not up");
-            // System.exit(1);
+    // Should this be split up into two, one for a crdt binary and one for a
+    // GenericFunction binary?
+    public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary){
+        if (!ObjectTable.containsKey(JavaObjectId)){
+            CRDT thing = (CRDT) binary.getObject();
+            ObjectTable.put(JavaObjectId, thing);
         }
-        while (true) {
+        else {
             try {
-                OtpErlangTuple tuple = (OtpErlangTuple) myOtpMbox.receive();
-                System.out.println("Recieved message");
-
-                last_pid = (OtpErlangPid) tuple.elementAt(0);
-                System.out.println("process pid acquired");
-
-                OtpErlangTuple payload = (OtpErlangTuple) tuple.elementAt(1);
-                System.out.println("got payload");
-
-                OtpErlangBinary ERLObjectId = (OtpErlangBinary) payload.elementAt(0);
-                System.out.println(ERLObjectId.binaryValue());
-                System.out.println("got object id");
-
-                String status = ((OtpErlangAtom) payload.elementAt(1)).atomValue();
-                System.out.println("got atom status for call");
-
-                System.out.println(status);
-
-                OtpErlangBinary binary = (OtpErlangBinary) payload.elementAt(2);
-
-                if (!ObjectTable.containsKey(ERLObjectId)) {
-                    System.out.println("new crdt object");
-                    // not true anymore
-                    // assert status.equals("invoke") : "trying to read an object that isn't made
-                    // yet";
-                    try {
-                        CRDT thing = (CRDT) binary.getObject();
-                        ObjectTable.put(ERLObjectId, thing);
-                        myOtpMbox.send(last_pid, ERLObjectId);
-                        System.out.println("We added the object");
-                    } catch (ClassCastException e) {
-                        // We got a Generic function so we missed the object initialization
-                        // See if we can get the object resent here
-                        OtpErlangAtom atom = new OtpErlangAtom("getobject");
-                        myOtpMbox.send(last_pid, atom);
-                        System.out.println("We need to get the object becuse we don't have it");
-                    } catch (NullPointerException e) {
-                        // This is the very start of the object before an invoke has been called
-                        // We will not add the object and wait for the next message which should be init
-                        myOtpMbox.send(last_pid, ERLObjectId);
-                        System.out.println("The object is still in the pipeline so we have to wait to get it");
-                    }
-                } else {
-                    CRDT crdt_object = ObjectTable.get(ERLObjectId);
-                    switch (status) {
-                    case "read":
-                        System.out.println("Doing read call");
-                        myOtpMbox.send(last_pid, new OtpErlangBinary(crdt_object.read()));
-                        break;
-
-                    case "invoke":
-                        System.out.println("Doing invoke call");
-                        try {
-                            GenericFunction func = (GenericFunction) binary.getObject();
-                            System.out.println("Doing invoke");
-                            crdt_object.invoke(func);
-                        } catch (ClassCastException e) {
-                            System.out.println("Did this already");
-                        }
-                        myOtpMbox.send(last_pid, ERLObjectId);
-                        break;
-
-                    case "snapshot":
-                        System.out.println("Doing antidote snapshot update");
-                        crdt_object.snapshot();
-                        byte[] b = new byte[20];
-                        new Random().nextBytes(b);
-                        OtpErlangBinary new_key = new OtpErlangBinary(b);
-                        //ObjectTable.remove(ERLObjectId);
-                        ObjectTable.put(new_key, crdt_object);
-                        OtpErlangObject[] emptypayload = new OtpErlangObject[2];
-                        emptypayload[0] = new_key;
-                        emptypayload[1] = new OtpErlangBinary(crdt_object);
-                        OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
-                        myOtpMbox.send(last_pid, new_snapshot);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                // return some failure
-                OtpErlangString errormsg = new OtpErlangString("hi");
-                // myOtpMbox.send(last_pid, errormsg);
-                OtpErlangAtom atom = new OtpErlangAtom("error");
-                myOtpMbox.send(last_pid, atom);
+                // assert that object is in table else request it
+                CRDT crdt_object = ObjectTable.get(JavaObjectId);
+                GenericFunction func = (GenericFunction) binary.getObject();
+                crdt_object.invoke(func);
+            } catch (ClassCastException e) {
+                // Check that we currently have a valid object in the table
+                System.out.println("Did this already");
             }
         }
+
+        return JavaObjectId;
+    }
+
+    // Should this be split up into two, one for a crdt binary and one for a
+    // GenericFunction binary?
+    public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary){
+        // TBD what if anything we want to do here otherwise something like this
+        return binary;
+    }
+
+    public OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId){
+        // assert that object is in table else request it
+        CRDT crdt_object = ObjectTable.get(JavaObjectId);
+        byte[] b = new byte[20];
+        new Random().nextBytes(b);
+        OtpErlangBinary new_key = new OtpErlangBinary(b);
+        //ObjectTable.remove(ERLObjectId);
+        ObjectTable.put(new_key, crdt_object);
+        OtpErlangObject[] emptypayload = new OtpErlangObject[2];
+        emptypayload[0] = new_key;
+        emptypayload[1] = new OtpErlangBinary(crdt_object);
+        OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
+        return new OtpErlangBinary (new_snapshot);
     }
 
     // The methods below are used in testing
@@ -300,7 +224,7 @@ public class Backend {
         try {
             boolean send_binary_test_message = Boolean.parseBoolean(args[1]);
             if (send_binary_test_message) {
-                Backend backend = new Backend("JavaNode", "javamailbox");
+                Backend backend = new Backend("JavaNode", "javamailbox", "antidote");
                 OtpErlangBinary bin = new OtpErlangBinary(new Counter(0));
                 // OtpErlangBinary bin = new OtpErlangBinary(new GenericFunction("increment",
                 // 1));
@@ -323,16 +247,16 @@ public class Backend {
                 usemain = true;
             }
             String nodename;
-            String target;
+            //String target;
             if (usemain) {
                 nodename = "JavaNode@127.0.0.1";
-                target = "antidote@127.0.0.1";
+                //target = "antidote@127.0.0.1";
             } else {
                 nodename = "JavaNode2@127.0.0.1";
-                target = "antidote2@127.0.0.1";
+                //target = "antidote2@127.0.0.1";
             }
             Backend backend = new Backend(nodename, "javamailbox", "antidote");
-            backend.run(target);
+            backend.run();
         } else {
             Backend backend = new Backend("antidote@127.0.0.1", "erlmailbox", "antidote");
             backend.test("javamailbox", "JavaNode@127.0.0.1");
