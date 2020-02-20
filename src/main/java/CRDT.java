@@ -2,7 +2,6 @@ import java.io.Serializable;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 
-
 interface CRDT extends Serializable {
     void invoke(GenericFunction obj);
 

@@ -76,18 +76,15 @@ public class Frontend {
     }
 
     public static void main(String[] args) {
-        boolean run;
+        int port;
         try {
-            run = Boolean.parseBoolean(args[0]);
+            port = Integer.parseInt(args[0]);
         } catch (Exception e) {
-            run = true;
+            port = 8087;
         }
-        Frontend antidote;
-        if (run) {
-            antidote = new Frontend("localhost", 8087, "my_bucket");
-        } else {
-            antidote = new Frontend("localhost", 8287, "my_bucket");
-        }
+        Frontend antidote = new Frontend("localhost", port, "my_bucket");
+        // antidote = new Frontend("localhost", 8287, "my_bucket");
+
         GenericKey key = Key.generic("my_example_counter");
         Counter counter = new Counter(0);
         antidote.static_send(key, counter);

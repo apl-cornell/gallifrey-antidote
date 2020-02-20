@@ -17,9 +17,9 @@ public class RWSet implements CRDT {
     }
 
     public Set<Object> value() {
-        Set<Object> currentset= new HashSet<Object>();
-        for (Object elem: addset.toArray()){
-            if (!removeset.contains(elem)){
+        Set<Object> currentset = new HashSet<Object>();
+        for (Object elem : addset.toArray()) {
+            if (!removeset.contains(elem)) {
                 currentset.add(elem);
             }
         }
@@ -30,8 +30,9 @@ public class RWSet implements CRDT {
         addset.add(elem);
         System.out.println("did add");
     }
+
     public void addSet(Set<Object> elems) {
-        for (Object elem: elems.toArray()){
+        for (Object elem : elems.toArray()) {
             addset.add(elem);
         }
     }
@@ -53,18 +54,18 @@ public class RWSet implements CRDT {
             IdSet.add(id);
         }
         switch (func) {
-        case "add":
-            add(args);
-            break;
-        case "remove":
-            remove(args);
-            break;
-        case "addSet":
-            addSet((Set<Object>)args);
-            break;
+            case "add":
+                add(args);
+                break;
+            case "remove":
+                remove(args);
+                break;
+            case "addSet":
+                addSet((Set<Object>) args);
+                break;
 
-        default:
-            throw new IllegalArgumentException(func + " is not a function for Counter");
+            default:
+                throw new IllegalArgumentException(func + " is not a function for Counter");
         }
     }
 
@@ -80,15 +81,15 @@ public class RWSet implements CRDT {
 
     public static void main(String[] args) {
         RWSet testSet = new RWSet();
-        Set<Integer> val = (Set<Integer>)testSet.read();
+        Set<Integer> val = (Set<Integer>) testSet.read();
         System.out.println(val);
         GenericFunction func1 = new GenericFunction("add", 2);
         testSet.invoke(func1);
-        Set<Integer> val2 = (Set<Integer>)testSet.read();
+        Set<Integer> val2 = (Set<Integer>) testSet.read();
         System.out.println(val2);
         GenericFunction func2 = new GenericFunction("remove", 2);
         testSet.invoke(func2);
-        Set<Integer> val3 = (Set<Integer>)testSet.read();
+        Set<Integer> val3 = (Set<Integer>) testSet.read();
         System.out.println(val3);
 
         Set<Integer> smallSet = new HashSet<Integer>();

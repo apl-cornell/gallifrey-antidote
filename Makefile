@@ -13,22 +13,22 @@ function:
 	./gradlew -PmainClass=GenericFunction execute
 
 backend:
-	./gradlew -PmainClass=Backend execute --args=True
+	./gradlew -PmainClass=Backend execute
 
 backend2:
-	./gradlew -PmainClass=Backend execute --args='True False False'
-
-test:
-	./gradlew -PmainClass=Backend execute --args=False
+	./gradlew -PmainClass=Backend execute --args='JavaNode2@127.0.0.1 antidote2@127.0.0.1'
 
 send:
-	./gradlew -PmainClass=Backend execute --args='False True'
+	./gradlew -PmainClass=Backend execute --args='0 0 True'
+
+#test:
+#	./gradlew -PmainClass=Backend execute --args='commented out and such'
 
 frontend:
-	./gradlew -PmainClass=Frontend execute --args=True
+	./gradlew -PmainClass=Frontend execute --args=8087
 
 frontend2:
-	./gradlew -PmainClass=Frontend execute --args=False
+	./gradlew -PmainClass=Frontend execute --args=8287
 
 clean:
 	./gradlew clean

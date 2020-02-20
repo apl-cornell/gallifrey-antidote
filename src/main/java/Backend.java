@@ -99,36 +99,36 @@ public class Backend {
                 } else {
                     CRDT crdt_object = ObjectTable.get(ERLObjectId);
                     switch (status) {
-                    case "read":
-                        System.out.println("Doing read call");
-                        myOtpMbox.send(last_pid, new OtpErlangBinary(crdt_object.read()));
-                        break;
+                        case "read":
+                            System.out.println("Doing read call");
+                            myOtpMbox.send(last_pid, new OtpErlangBinary(crdt_object.read()));
+                            break;
 
-                    case "invoke":
-                        System.out.println("Doing invoke call");
-                        try {
-                            GenericFunction func = (GenericFunction) binary.getObject();
-                            System.out.println("Doing invoke");
-                            crdt_object.invoke(func);
-                        } catch (ClassCastException e) {
-                            System.out.println("Did this already");
-                        }
-                        myOtpMbox.send(last_pid, ERLObjectId);
-                        break;
+                        case "invoke":
+                            System.out.println("Doing invoke call");
+                            try {
+                                GenericFunction func = (GenericFunction) binary.getObject();
+                                System.out.println("Doing invoke");
+                                crdt_object.invoke(func);
+                            } catch (ClassCastException e) {
+                                System.out.println("Did this already");
+                            }
+                            myOtpMbox.send(last_pid, ERLObjectId);
+                            break;
 
-                    case "snapshot":
-                        System.out.println("Doing antidote snapshot update");
-                        crdt_object.snapshot();
-                        byte[] b = new byte[20];
-                        new Random().nextBytes(b);
-                        OtpErlangBinary new_key = new OtpErlangBinary(b);
-                        //ObjectTable.remove(ERLObjectId);
-                        ObjectTable.put(new_key, crdt_object);
-                        OtpErlangObject[] emptypayload = new OtpErlangObject[2];
-                        emptypayload[0] = new_key;
-                        emptypayload[1] = new OtpErlangBinary(crdt_object);
-                        OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
-                        myOtpMbox.send(last_pid, new_snapshot);
+                        case "snapshot":
+                            System.out.println("Doing antidote snapshot update");
+                            crdt_object.snapshot();
+                            byte[] b = new byte[20];
+                            new Random().nextBytes(b);
+                            OtpErlangBinary new_key = new OtpErlangBinary(b);
+                            // ObjectTable.remove(ERLObjectId);
+                            ObjectTable.put(new_key, crdt_object);
+                            OtpErlangObject[] emptypayload = new OtpErlangObject[2];
+                            emptypayload[0] = new_key;
+                            emptypayload[1] = new OtpErlangBinary(crdt_object);
+                            OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
+                            myOtpMbox.send(last_pid, new_snapshot);
                     }
                 }
             } catch (Exception e) {
@@ -289,14 +289,9 @@ public class Backend {
     }
 
     public static void main(String[] args) {
-        boolean run;
+        // For when I need to get the full binary of a java object for testing
         try {
-            run = Boolean.parseBoolean(args[0]);
-        } catch (Exception e) {
-            run = true;
-        }
-        try {
-            boolean send_binary_test_message = Boolean.parseBoolean(args[1]);
+            boolean send_binary_test_message = Boolean.parseBoolean(args[2]);
             if (send_binary_test_message) {
                 Backend backend = new Backend("JavaNode", "javamailbox");
                 OtpErlangBinary bin = new OtpErlangBinary(new Counter(0));
@@ -313,27 +308,25 @@ public class Backend {
             }
         } catch (Exception e) {
         }
-        if (run) {
-            boolean usemain;
-            try {
-                usemain = Boolean.parseBoolean(args[2]);
-            } catch (Exception e) {
-                usemain = true;
-            }
-            String nodename;
-            String target;
-            if (usemain) {
-                nodename = "JavaNode@127.0.0.1";
-                target = "antidote@127.0.0.1";
-            } else {
-                nodename = "JavaNode2@127.0.0.1";
-                target = "antidote2@127.0.0.1";
-            }
-            Backend backend = new Backend(nodename, "javamailbox", "antidote");
-            backend.run(target);
+
+        String nodename;
+        if (args.length >= 1) {
+            nodename = args[0];
         } else {
-            Backend backend = new Backend("antidote@127.0.0.1", "erlmailbox", "antidote");
-            backend.test("javamailbox", "JavaNode@127.0.0.1");
+            nodename = "JavaNode@127.0.0.1";
         }
+        String target;
+        if (args.length >= 2) {
+            target = args[1];
+        } else {
+            target = "antidote@127.0.0.1";
+        }
+        Backend backend = new Backend(nodename, "javamailbox", "antidote");
+        backend.run(target);
+
+        // For testing by pretending this backend is antidote
+        // Backend backend = new Backend("antidote@127.0.0.1", "erlmailbox",
+        // "antidote");
+        // backend.test("javamailbox", "JavaNode@127.0.0.1");
     }
 }

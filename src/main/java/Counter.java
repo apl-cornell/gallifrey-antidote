@@ -42,15 +42,15 @@ public class Counter implements CRDT {
             IdSet.add(id);
         }
         switch (func) {
-        case "increment":
-            increment((int) args);
-            break;
-        case "decrement":
-            decrement((int) args);
-            break;
+            case "increment":
+                increment((int) args);
+                break;
+            case "decrement":
+                decrement((int) args);
+                break;
 
-        default:
-            throw new IllegalArgumentException(func + " is not a function for Counter");
+            default:
+                throw new IllegalArgumentException(func + " is not a function for Counter");
         }
     }
 
@@ -61,7 +61,7 @@ public class Counter implements CRDT {
 
     @Override
     public void snapshot() {
-        //IdSet = new HashSet<>();
+        // IdSet = new HashSet<>();
     }
 
     public static void main(String[] args) {
