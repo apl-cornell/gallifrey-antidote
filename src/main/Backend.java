@@ -18,17 +18,23 @@ public class Backend extends AntidoteBackend{
         super(NodeName, MailBox, cookie);
     }
 
-    public OtpErlangBinary value(OtpErlangBinary JavaObjectId){
+    public OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
         CRDT crdt_object = ObjectTable.get(JavaObjectId);
+        if (crdt_object == null) {
+            throw new NoSuchObjectException();
+        }
         return new OtpErlangBinary(crdt_object.read());
     }
 
     // Should this be split up into two, one for a crdt binary and one for a
     // GenericFunction binary?
-    public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary){
+    public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
         if (!ObjectTable.containsKey(JavaObjectId)){
             CRDT thing = (CRDT) binary.getObject();
+            if (thing == null) {
+                throw new NoSuchObjectException();
+            }
             ObjectTable.put(JavaObjectId, thing);
         }
         else {
@@ -53,9 +59,12 @@ public class Backend extends AntidoteBackend{
         return binary;
     }
 
-    public OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId){
+    public OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException{
         // assert that object is in table else request it
         CRDT crdt_object = ObjectTable.get(JavaObjectId);
+        if (crdt_object == null) {
+            throw new NoSuchObjectException();
+        }
         byte[] b = new byte[20];
         new Random().nextBytes(b);
         OtpErlangBinary new_key = new OtpErlangBinary(b);
@@ -66,6 +75,12 @@ public class Backend extends AntidoteBackend{
         emptypayload[1] = new OtpErlangBinary(crdt_object);
         OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
         return new OtpErlangBinary (new_snapshot);
+    }
+
+    public OtpErlangBinary newJavaObjectId(){
+        byte[] b = new byte[20];
+        new Random().nextBytes(b);
+        return new OtpErlangBinary(b);
     }
 
     // The methods below are used in testing

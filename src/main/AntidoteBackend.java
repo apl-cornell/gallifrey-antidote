@@ -42,30 +42,19 @@ abstract class AntidoteBackend {
         }
     }
 
-    public abstract OtpErlangBinary value(OtpErlangBinary JavaObjectId);
+    public abstract OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
     // Should this be split up into two, one for a crdt binary and one for a
     // GenericFunction binary?
-    public abstract OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary);
+    public abstract OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException;
 
-    // Should this be split up into two, one for a crdt binary and one for a
-    // GenericFunction binary?
-    // public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary);
+    // If we want to do any analysis on the operation based on current state before it becomes a valid operation.
+    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException;
 
-    public abstract OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId);
+    public abstract OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
-    // Antidote has given us a JavaId for an object we don't have so we need to
-    // request it from antidote.
-    // Should this be a special `status` that antidote can send to us or just stick
-    // with antidote calliing invoke with JavaObject
-    public void requestUpdateInvocationWithObject() {
-        OtpErlangAtom atom = new OtpErlangAtom("getobject");
-        myOtpMbox.send(last_pid, atom);
-    }
-
-    // TBD if this adds value/ is something that can be used
-    // public abstract void new();
-    // Get JavaId
+    // For when erlang wants to instantiate a new erlang object for a to be created java object and needs a corresponding id.
+    public abstract OtpErlangBinary newJavaObjectId();
 
     public void run() {
         while (true) {
@@ -94,10 +83,15 @@ abstract class AntidoteBackend {
                     case "snapshot":
                         myOtpMbox.send(last_pid, snapshot(JavaObjectId));
 
-                        // Not currently sent while this is thought out
-                    //case "downstream":
-                    //    myOtpMbox.send(last_pid, downstream(JavaObjectId, binary));
+                    case "downstream":
+                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary));
+
+                    case "newjavaid":
+                        myOtpMbox.send(last_pid, newJavaObjectId());
                 }
+            } catch (NoSuchObjectException e) {
+                OtpErlangAtom atom = new OtpErlangAtom("getobject");
+                myOtpMbox.send(last_pid, atom);
             } catch (Exception e) {
                 e.printStackTrace();
                 // return some failure
