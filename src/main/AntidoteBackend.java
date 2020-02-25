@@ -54,9 +54,11 @@ abstract class AntidoteBackend {
     public abstract OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
     // For when erlang wants to instantiate a new erlang object for a to be created java object and needs a corresponding id.
+    // Must be 20 bytes or things will go poorly
     public abstract OtpErlangBinary newJavaObjectId();
 
     public void run() {
+        System.out.println(myOtpNode);
         while (true) {
             try {
                 OtpErlangTuple tuple = (OtpErlangTuple) myOtpMbox.receive();
@@ -72,24 +74,33 @@ abstract class AntidoteBackend {
 
                 switch (status) {
                     case "read":
+                        System.out.println("doing read");
                         myOtpMbox.send(last_pid, value(JavaObjectId));
                         break;
 
                     // maybe change invoke to update?
                     case "invoke":
+                        System.out.println("doing invoke");
                         myOtpMbox.send(last_pid, update(JavaObjectId, binary));
                         break;
 
                     case "snapshot":
+                        System.out.println("doing snapshot");
                         myOtpMbox.send(last_pid, snapshot(JavaObjectId));
+                        break;
 
                     case "downstream":
+                        System.out.println("doing downstream");
                         myOtpMbox.send(last_pid, downstream(JavaObjectId, binary));
+                        break;
 
                     case "newjavaid":
+                        System.out.println("Creating a new Java id");
                         myOtpMbox.send(last_pid, newJavaObjectId());
+                        break;
                 }
             } catch (NoSuchObjectException e) {
+                System.out.println("Requesting the object");
                 OtpErlangAtom atom = new OtpErlangAtom("getobject");
                 myOtpMbox.send(last_pid, atom);
             } catch (Exception e) {

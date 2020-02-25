@@ -10,11 +10,11 @@ import com.ericsson.otp.erlang.OtpErlangPid;
 import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpErlangObject;
 
-public class Backend extends AntidoteBackend{
+public class Backend extends AntidoteBackend {
 
     Map<OtpErlangBinary, CRDT> ObjectTable = new Hashtable<>();
 
-    public Backend(String NodeName, String MailBox, String cookie){
+    public Backend(String NodeName, String MailBox, String cookie) {
         super(NodeName, MailBox, cookie);
     }
 
@@ -30,14 +30,15 @@ public class Backend extends AntidoteBackend{
     // Should this be split up into two, one for a crdt binary and one for a
     // GenericFunction binary?
     public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
-        if (!ObjectTable.containsKey(JavaObjectId)){
-            CRDT thing = (CRDT) binary.getObject();
-            if (thing == null) {
+        if (!ObjectTable.containsKey(JavaObjectId)) {
+            CRDT thing;
+            try {
+                thing = (CRDT) binary.getObject();
+            } catch (ClassCastException e) {
                 throw new NoSuchObjectException();
             }
             ObjectTable.put(JavaObjectId, thing);
-        }
-        else {
+        } else {
             try {
                 // assert that object is in table else request it
                 CRDT crdt_object = ObjectTable.get(JavaObjectId);
@@ -54,12 +55,12 @@ public class Backend extends AntidoteBackend{
 
     // Should this be split up into two, one for a crdt binary and one for a
     // GenericFunction binary?
-    public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary){
+    public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
         // TBD what if anything we want to do here otherwise something like this
         return binary;
     }
 
-    public OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException{
+    public OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
         CRDT crdt_object = ObjectTable.get(JavaObjectId);
         if (crdt_object == null) {
@@ -68,16 +69,16 @@ public class Backend extends AntidoteBackend{
         byte[] b = new byte[20];
         new Random().nextBytes(b);
         OtpErlangBinary new_key = new OtpErlangBinary(b);
-        //ObjectTable.remove(ERLObjectId);
+        // ObjectTable.remove(ERLObjectId);
         ObjectTable.put(new_key, crdt_object);
         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
         emptypayload[0] = new_key;
         emptypayload[1] = new OtpErlangBinary(crdt_object);
         OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
-        return new OtpErlangBinary (new_snapshot);
+        return new OtpErlangBinary(new_snapshot);
     }
 
-    public OtpErlangBinary newJavaObjectId(){
+    public OtpErlangBinary newJavaObjectId() {
         byte[] b = new byte[20];
         new Random().nextBytes(b);
         return new OtpErlangBinary(b);
@@ -262,13 +263,13 @@ public class Backend extends AntidoteBackend{
                 usemain = true;
             }
             String nodename;
-            //String target;
+            // String target;
             if (usemain) {
                 nodename = "JavaNode@127.0.0.1";
-                //target = "antidote@127.0.0.1";
+                // target = "antidote@127.0.0.1";
             } else {
                 nodename = "JavaNode2@127.0.0.1";
-                //target = "antidote2@127.0.0.1";
+                // target = "antidote2@127.0.0.1";
             }
             Backend backend = new Backend(nodename, "javamailbox", "antidote");
             backend.run();
