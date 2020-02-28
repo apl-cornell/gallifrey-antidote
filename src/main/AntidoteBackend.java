@@ -18,9 +18,7 @@ abstract class AntidoteBackend {
             myOtpNode.setCookie("antidote");
             myOtpMbox = myOtpNode.createMbox();
             myOtpMbox.registerName("javamailbox");
-        } catch (
-
-        Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
@@ -46,14 +44,18 @@ abstract class AntidoteBackend {
 
     // Should this be split up into two, one for a crdt binary and one for a
     // GenericFunction binary?
-    public abstract OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException;
+    public abstract OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary)
+            throws NoSuchObjectException;
 
-    // If we want to do any analysis on the operation based on current state before it becomes a valid operation.
-    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException;
+    // If we want to do any analysis on the operation based on current state before
+    // it becomes a valid operation.
+    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary)
+            throws NoSuchObjectException;
 
     public abstract OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
-    // For when erlang wants to instantiate a new erlang object for a to be created java object and needs a corresponding id.
+    // For when erlang wants to instantiate a new erlang object for a to be created
+    // java object and needs a corresponding id.
     // Must be 20 bytes or things will go poorly
     public abstract OtpErlangBinary newJavaObjectId();
 
@@ -74,38 +76,31 @@ abstract class AntidoteBackend {
 
                 switch (status) {
                     case "read":
-                        System.out.println("doing read");
                         myOtpMbox.send(last_pid, value(JavaObjectId));
                         break;
 
                     // maybe change invoke to update?
                     case "invoke":
-                        System.out.println("doing invoke");
                         myOtpMbox.send(last_pid, update(JavaObjectId, binary));
                         break;
 
                     case "snapshot":
-                        System.out.println("doing snapshot");
                         myOtpMbox.send(last_pid, snapshot(JavaObjectId));
                         break;
 
                     case "downstream":
-                        System.out.println("doing downstream");
                         myOtpMbox.send(last_pid, downstream(JavaObjectId, binary));
                         break;
 
                     case "newjavaid":
-                        System.out.println("Creating a new Java id");
                         myOtpMbox.send(last_pid, newJavaObjectId());
                         break;
                 }
             } catch (NoSuchObjectException e) {
-                System.out.println("Requesting the object");
                 OtpErlangAtom atom = new OtpErlangAtom("getobject");
                 myOtpMbox.send(last_pid, atom);
             } catch (Exception e) {
                 e.printStackTrace();
-                // return some failure
                 OtpErlangAtom atom = new OtpErlangAtom("error");
                 myOtpMbox.send(last_pid, atom);
             }
