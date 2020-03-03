@@ -52,7 +52,7 @@ abstract class AntidoteBackend {
     public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary)
             throws NoSuchObjectException;
 
-    public abstract OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
+    public abstract OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
     // For when erlang wants to instantiate a new erlang object for a to be created
     // java object and needs a corresponding id.

@@ -60,22 +60,21 @@ public class Backend extends AntidoteBackend {
         return binary;
     }
 
-    public OtpErlangBinary snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
+    public OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
         CRDT crdt_object = ObjectTable.get(JavaObjectId);
         if (crdt_object == null) {
             throw new NoSuchObjectException();
         }
-        byte[] b = new byte[20];
-        new Random().nextBytes(b);
-        OtpErlangBinary new_key = new OtpErlangBinary(b);
+
+        OtpErlangBinary new_key = newJavaObjectId();
         // ObjectTable.remove(ERLObjectId);
         ObjectTable.put(new_key, crdt_object);
         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
         emptypayload[0] = new_key;
         emptypayload[1] = new OtpErlangBinary(crdt_object);
         OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
-        return new OtpErlangBinary(new_snapshot);
+        return new_snapshot;
     }
 
     public OtpErlangBinary newJavaObjectId() {
