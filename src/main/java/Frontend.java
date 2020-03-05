@@ -77,13 +77,24 @@ public class Frontend {
 
     public static void main(String[] args) {
         int port;
-        try {
-            port = Integer.parseInt(args[0]);
-        } catch (Exception e) {
+        String ip;
+        String bucket;
+        if (args.length >= 1) {
+            ip = args[0];
+        } else {
+            ip = "localhost";
+        }
+        if (args.length >= 2) {
+            port = Integer.parseInt(args[1]);
+        } else {
             port = 8087;
         }
-        Frontend antidote = new Frontend("localhost", port, "my_bucket");
-        // antidote = new Frontend("localhost", 8287, "my_bucket");
+        if (args.length >= 3) {
+            bucket = args[2];
+        } else {
+            bucket = "my_bucket";
+        }
+        Frontend antidote = new Frontend(ip, port, bucket);
 
         GenericKey key = Key.generic("my_example_counter");
         Counter counter = new Counter(0);

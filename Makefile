@@ -1,6 +1,6 @@
 all: build
 
-build:
+build: clean
 	./gradlew build
 
 counter:
@@ -12,7 +12,7 @@ rwset:
 function:
 	./gradlew -PmainClass=GenericFunction execute
 
-backend:
+backend: build
 	./gradlew -PmainClass=Backend execute
 
 backend2:
@@ -25,10 +25,10 @@ send:
 #	./gradlew -PmainClass=Backend execute --args='commented out and such'
 
 frontend:
-	./gradlew -PmainClass=Frontend execute --args=8087
+	./gradlew -PmainClass=Frontend execute --args='localhost 8087'
 
 frontend2:
-	./gradlew -PmainClass=Frontend execute --args=8287
+	./gradlew -PmainClass=Frontend execute --args='localhost 8287'
 
 clean:
 	./gradlew clean
