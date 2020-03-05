@@ -1,34 +1,34 @@
-all:
-	javac -cp .:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-3.11.0-rc-1.jar:lib/jinterface-1.6.1.jar src/main/*.java
+all: build
 
-build: all
+build:
+	./gradlew build
 
 counter:
-	java -cp .:src main.Counter
+	./gradlew -PmainClass=Counter execute
 
 rwset:
-	java -cp .:src main.RWSet
+	./gradlew -PmainClass=RWSet execute
 
 function:
-	java -cp .:src:lib/jinterface-1.6.1.jar main/GenericFunction
+	./gradlew -PmainClass=GenericFunction execute
 
 backend:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend True
+	./gradlew -PmainClass=Backend execute
 
 backend2:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend True False False
-
-test:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend False
+	./gradlew -PmainClass=Backend execute --args='JavaNode2@127.0.0.1 antidote2@127.0.0.1'
 
 send:
-	java -cp .:src:lib/jinterface-1.6.1.jar main.Backend False True
+	./gradlew -PmainClass=Backend execute --args='0 0 True'
+
+#test:
+#	./gradlew -PmainClass=Backend execute --args='commented out and such'
 
 frontend:
-	java -cp .:src:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-3.11.0-rc-1.jar:lib/jinterface-1.6.1.jar main.Frontend True
+	./gradlew -PmainClass=Frontend execute --args=8087
 
 frontend2:
-	java -cp .:src:../antidote-java-client/build/classes/java/main/:lib/protobuf-java-3.11.0-rc-1.jar:lib/jinterface-1.6.1.jar main.Frontend False
+	./gradlew -PmainClass=Frontend execute --args=8287
 
 clean:
-	rm src/main/*.class
+	./gradlew clean

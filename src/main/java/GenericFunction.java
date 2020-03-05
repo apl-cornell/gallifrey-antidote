@@ -1,9 +1,5 @@
-package main;
-
 import java.io.*;
 import java.util.Random;
-
-import com.ericsson.otp.erlang.OtpErlangBinary;
 
 public class GenericFunction implements Serializable {
     private static final long serialVersionUID = 1L;

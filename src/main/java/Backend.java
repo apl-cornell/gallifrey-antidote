@@ -1,5 +1,3 @@
-package main;
-
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Random;
@@ -230,14 +228,9 @@ public class Backend extends AntidoteBackend {
     }
 
     public static void main(String[] args) {
-        boolean run;
+        // For when I need to get the full binary of a java object for testing
         try {
-            run = Boolean.parseBoolean(args[0]);
-        } catch (Exception e) {
-            run = true;
-        }
-        try {
-            boolean send_binary_test_message = Boolean.parseBoolean(args[1]);
+            boolean send_binary_test_message = Boolean.parseBoolean(args[2]);
             if (send_binary_test_message) {
                 Backend backend = new Backend("JavaNode", "javamailbox", "antidote");
                 OtpErlangBinary bin = new OtpErlangBinary(new Counter(0));
@@ -254,27 +247,25 @@ public class Backend extends AntidoteBackend {
             }
         } catch (Exception e) {
         }
-        if (run) {
-            boolean usemain;
-            try {
-                usemain = Boolean.parseBoolean(args[2]);
-            } catch (Exception e) {
-                usemain = true;
-            }
-            String nodename;
-            // String target;
-            if (usemain) {
-                nodename = "JavaNode@127.0.0.1";
-                // target = "antidote@127.0.0.1";
-            } else {
-                nodename = "JavaNode2@127.0.0.1";
-                // target = "antidote2@127.0.0.1";
-            }
-            Backend backend = new Backend(nodename, "javamailbox", "antidote");
-            backend.run();
+
+        String nodename;
+        if (args.length >= 1) {
+            nodename = args[0];
         } else {
-            Backend backend = new Backend("antidote@127.0.0.1", "erlmailbox", "antidote");
-            backend.test("javamailbox", "JavaNode@127.0.0.1");
+            nodename = "JavaNode@127.0.0.1";
         }
+        String target;
+        if (args.length >= 2) {
+            target = args[1];
+        } else {
+            target = "antidote@127.0.0.1";
+        }
+        Backend backend = new Backend(nodename, "javamailbox", "antidote");
+        backend.run();
+
+        // For testing by pretending this backend is antidote
+        // Backend backend = new Backend("antidote@127.0.0.1", "erlmailbox",
+        // "antidote");
+        // backend.test("javamailbox", "JavaNode@127.0.0.1");
     }
 }
