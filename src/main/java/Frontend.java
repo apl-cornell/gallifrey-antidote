@@ -1,8 +1,6 @@
 import java.io.*;
 import java.net.InetSocketAddress;
 
-import com.ericsson.otp.erlang.OtpErlangBinary;
-
 import eu.antidotedb.client.*;
 
 import com.google.protobuf.ByteString;
@@ -21,6 +19,7 @@ public class Frontend {
     }
 
     public static ByteString custom_serialization(Object obj) {
+        // import com.ericsson.otp.erlang.OtpErlangBinary;
         // new OtpErlangBinary
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
             out.writeObject(obj);

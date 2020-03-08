@@ -1,3 +1,5 @@
+import java.io.IOException;
+
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangPid;
@@ -5,9 +7,9 @@ import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpMbox;
 import com.ericsson.otp.erlang.OtpNode;
 
-abstract class AntidoteBackend {
-    OtpMbox myOtpMbox = null;
-    OtpNode myOtpNode = null;
+abstract class AntidoteBackend implements Runnable {
+    final OtpMbox myOtpMbox;
+    final OtpNode myOtpNode;
     OtpErlangPid last_pid;
 
     public AntidoteBackend() {
@@ -16,7 +18,7 @@ abstract class AntidoteBackend {
             myOtpNode.setCookie("antidote");
             myOtpMbox = myOtpNode.createMbox();
             myOtpMbox.registerName("javamailbox");
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
@@ -32,7 +34,7 @@ abstract class AntidoteBackend {
             myOtpNode.setCookie(cookie);
             myOtpMbox = myOtpNode.createMbox();
             myOtpMbox.registerName(MailBox);
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
@@ -40,8 +42,6 @@ abstract class AntidoteBackend {
 
     public abstract OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
-    // Should this be split up into two, one for a crdt binary and one for a
-    // GenericFunction binary?
     public abstract OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary)
             throws NoSuchObjectException;
 
@@ -72,6 +72,7 @@ abstract class AntidoteBackend {
                 String status = ((OtpErlangAtom) payload.elementAt(1)).atomValue();
                 OtpErlangBinary binary = (OtpErlangBinary) payload.elementAt(2);
 
+                // todo enum
                 switch (status) {
                     case "read":
                         myOtpMbox.send(last_pid, value(JavaObjectId));

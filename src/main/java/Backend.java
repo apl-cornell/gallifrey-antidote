@@ -17,7 +17,6 @@ public class Backend extends AntidoteBackend {
     }
 
     public OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
-        // assert that object is in table else request it
         CRDT crdt_object = ObjectTable.get(JavaObjectId);
         if (crdt_object == null) {
             throw new NoSuchObjectException();
@@ -25,34 +24,33 @@ public class Backend extends AntidoteBackend {
         return new OtpErlangBinary(crdt_object.read());
     }
 
-    // Should this be split up into two, one for a crdt binary and one for a
-    // GenericFunction binary?
     public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
         if (!ObjectTable.containsKey(JavaObjectId)) {
-            CRDT thing;
             try {
-                thing = (CRDT) binary.getObject();
+                CRDT crdt_object = (CRDT) binary.getObject();
+                ObjectTable.put(JavaObjectId, crdt_object);
             } catch (ClassCastException e) {
+                // We don't have the object and we have been given an update
+                // so we need to request the object from antidote and try again
+                assert (binary.getObject().getClass() == GenericFunction.class);
                 throw new NoSuchObjectException();
             }
-            ObjectTable.put(JavaObjectId, thing);
         } else {
             try {
-                // assert that object is in table else request it
                 CRDT crdt_object = ObjectTable.get(JavaObjectId);
                 GenericFunction func = (GenericFunction) binary.getObject();
                 crdt_object.invoke(func);
             } catch (ClassCastException e) {
-                // Check that we currently have a valid object in the table
-                System.out.println("Did this already");
+                /* intentionally ignore this exception */
+                // This happens because we don't have an Idset for crdt initializations through
+                // updates so we got a redundant crdt object(something we already have)
+                assert (binary.getObject().getClass() == CRDT.class);
             }
         }
 
         return JavaObjectId;
     }
 
-    // Should this be split up into two, one for a crdt binary and one for a
-    // GenericFunction binary?
     public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
         // TBD what if anything we want to do here otherwise something like this
         return binary;

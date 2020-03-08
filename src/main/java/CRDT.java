@@ -1,4 +1,3 @@
-import com.ericsson.otp.erlang.OtpErlangBinary;
 import java.io.Serializable;
 
 interface CRDT extends Serializable {
@@ -11,6 +10,7 @@ interface CRDT extends Serializable {
   // just serialize for snapshot read
 
   /*
+   * import com.ericsson.otp.erlang.OtpErlangBinary;
    * public static int bin_to_int(OtpErlangBinary val) { return (int)
    * val.getObject(); }
    *
