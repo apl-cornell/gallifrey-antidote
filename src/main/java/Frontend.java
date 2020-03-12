@@ -104,7 +104,7 @@ public class Frontend {
             System.out.println(antidote.static_read(key));
             GenericFunction func2 = new GenericFunction("decrement", 1);
             antidote.static_send(key, func2);
-            System.out.println((Integer) antidote.read(key));
+            System.out.println(antidote.static_read(key));
         }
     }
 }

@@ -4,6 +4,7 @@ import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangPid;
 import com.ericsson.otp.erlang.OtpErlangTuple;
+import com.ericsson.otp.erlang.OtpErlangLong;
 import com.ericsson.otp.erlang.OtpMbox;
 import com.ericsson.otp.erlang.OtpNode;
 
@@ -11,6 +12,10 @@ abstract class AntidoteBackend implements Runnable {
     final OtpMbox myOtpMbox;
     final OtpNode myOtpNode;
     OtpErlangPid last_pid;
+
+    public enum Status {
+        read, update, downstream, snapshot, newjavaid
+    }
 
     public AntidoteBackend() {
         try {
@@ -69,29 +74,27 @@ abstract class AntidoteBackend implements Runnable {
 
                 // Antidote sends the JavaId, operation, and binary args
                 OtpErlangBinary JavaObjectId = (OtpErlangBinary) payload.elementAt(0);
-                String status = ((OtpErlangAtom) payload.elementAt(1)).atomValue();
+                int status_enum = ((OtpErlangLong) payload.elementAt(1)).intValue();
                 OtpErlangBinary binary = (OtpErlangBinary) payload.elementAt(2);
 
-                // todo enum
-                switch (status) {
-                    case "read":
+                switch (Status.values()[status_enum]) {
+                    case read:
                         myOtpMbox.send(last_pid, value(JavaObjectId));
                         break;
 
-                    // maybe change invoke to update?
-                    case "invoke":
+                    case update:
                         myOtpMbox.send(last_pid, update(JavaObjectId, binary));
                         break;
 
-                    case "snapshot":
+                    case snapshot:
                         myOtpMbox.send(last_pid, snapshot(JavaObjectId));
                         break;
 
-                    case "downstream":
+                    case downstream:
                         myOtpMbox.send(last_pid, downstream(JavaObjectId, binary));
                         break;
 
-                    case "newjavaid":
+                    case newjavaid:
                         myOtpMbox.send(last_pid, newJavaObjectId());
                         break;
                 }

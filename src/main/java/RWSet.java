@@ -1,24 +1,23 @@
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
  * Remove Wins Set
  */
-public class RWSet implements CRDT {
+public class RWSet<T extends Object> extends CRDT {
     private static final long serialVersionUID = 1L;
-    private Set<Object> addset;
-    private Set<Object> removeset;
-    private Set<Integer> IdSet;
+    private Set<T> addset;
+    private Set<T> removeset;
 
     public RWSet() {
-        addset = new HashSet<Object>();
-        removeset = new HashSet<Object>();
-        IdSet = new HashSet<>();
+        addset = new HashSet<T>();
+        removeset = new HashSet<T>();
     }
 
-    public Set<Object> value() {
-        Set<Object> currentset = new HashSet<Object>();
-        for (Object elem : addset.toArray()) {
+    public Set<T> value() {
+        Set<T> currentset = new HashSet<T>();
+        for (T elem : new ArrayList<T>(addset)) {
             if (!removeset.contains(elem)) {
                 currentset.add(elem);
             }
@@ -26,70 +25,33 @@ public class RWSet implements CRDT {
         return currentset;
     }
 
-    public void add(Object elem) {
+    public void add(T elem) {
         addset.add(elem);
         System.out.println("did add");
     }
 
-    public void addSet(Set<Object> elems) {
-        for (Object elem : elems.toArray()) {
+    public void addSet(Set<T> elems) {
+        for (T elem : new ArrayList<T>(elems)) {
             addset.add(elem);
         }
     }
 
-    public void remove(Object elem) {
+    public void remove(T elem) {
         removeset.add(elem);
         System.out.println("did remove");
     }
 
-    @Override
-    public void invoke(GenericFunction obj) {
-        String func = obj.getFunctionName();
-        Object args = obj.getArgument();
-        Integer id = obj.getId();
-        if (IdSet.contains(id)) {
-            System.out.println("We have already done this");
-            return;
-        } else {
-            IdSet.add(id);
-        }
-        switch (func) {
-            case "add":
-                add(args);
-                break;
-            case "remove":
-                remove(args);
-                break;
-            case "addSet":
-                addSet((Set<Object>) args);
-                break;
-
-            default:
-                throw new IllegalArgumentException(func + " is not a function for Counter");
-        }
-    }
-
-    @Override
-    public Object read() {
-        return value();
-    }
-
-    @Override
-    public void snapshot() {
-        IdSet = new HashSet<>();
-    }
-
     public static void main(String[] args) {
-        RWSet testSet = new RWSet();
-        Set<Integer> val = (Set<Integer>) testSet.read();
+        RWSet<Integer> testSet = new RWSet<Integer>();
+        Set<Integer> val = testSet.value();
         System.out.println(val);
         GenericFunction func1 = new GenericFunction("add", 2);
         testSet.invoke(func1);
-        Set<Integer> val2 = (Set<Integer>) testSet.read();
+        Set<Integer> val2 = (Set<Integer>) testSet.value();
         System.out.println(val2);
         GenericFunction func2 = new GenericFunction("remove", 2);
         testSet.invoke(func2);
-        Set<Integer> val3 = (Set<Integer>) testSet.read();
+        Set<Integer> val3 = (Set<Integer>) testSet.value();
         System.out.println(val3);
 
         Set<Integer> smallSet = new HashSet<Integer>();
@@ -98,7 +60,7 @@ public class RWSet implements CRDT {
 
         GenericFunction func3 = new GenericFunction("addSet", smallSet);
         testSet.invoke(func3);
-        Set<Integer> val4 = (Set<Integer>) testSet.read();
+        Set<Integer> val4 = (Set<Integer>) testSet.value();
         System.out.println(val4);
 
     }

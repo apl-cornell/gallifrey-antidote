@@ -1,20 +1,73 @@
-import java.io.Serializable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
-interface CRDT extends Serializable {
-  void invoke(GenericFunction obj);
+import java.util.List;
 
-  Object read();
+import java.lang.reflect.Method;
 
-  void snapshot();
+abstract class CRDT implements Antidote_interface {
+  private static final long serialVersionUID = 1L;
 
-  // just serialize for snapshot read
+  abstract public Object value();
 
-  /*
-   * import com.ericsson.otp.erlang.OtpErlangBinary;
-   * public static int bin_to_int(OtpErlangBinary val) { return (int)
-   * val.getObject(); }
-   *
-   * public static OtpErlangBinary int_to_bin(int val) { return new
-   * OtpErlangBinary(Integer.valueOf(val)); }
-   */
+  public void invoke(GenericFunction obj) {
+    try {
+      String method_name = obj.getFunctionName();
+      List<Object> args = obj.getArguments();
+      /* Integer id = obj.getId(); */
+
+      Class<?>[] argTypes = new Class[args.size()];
+      for (int i = 0; i < args.size(); i++) {
+        argTypes[i] = args.get(i).getClass();
+      }
+
+      System.out.println(argTypes);
+
+      Method method;
+      try {
+        method = this.getClass().getDeclaredMethod(method_name, argTypes);
+
+        method.invoke(this, args.toArray());
+      } catch (NoSuchMethodException e) {
+        // This is the case where the method has generic args
+        // Still doesn't work great
+        for (int i = 0; i < args.size(); i++) {
+          argTypes[i] = Object.class;
+        }
+
+        method = this.getClass().getDeclaredMethod(method_name, argTypes);
+        method.invoke(this, args.toArray());
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
+
+  public CRDT deepClone() {
+    /*
+     * Shamelessly based on code from the below link. Altered to be more of a
+     * function than an object method
+     * https://www.avajava.com/tutorials/lessons/how-do-i-perform-a-deep-clone-using
+     * -serializable.html
+     */
+
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream oos = new ObjectOutputStream(baos);
+      oos.writeObject(this);
+
+      ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+      ObjectInputStream ois = new ObjectInputStream(bais);
+      return (CRDT) ois.readObject();
+    } catch (IOException e) {
+      return null;
+    } catch (ClassNotFoundException e) {
+      return null;
+    }
+  }
 }

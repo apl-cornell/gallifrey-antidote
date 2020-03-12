@@ -1,5 +1,6 @@
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.HashSet;
 import java.util.Random;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
@@ -10,25 +11,37 @@ import com.ericsson.otp.erlang.OtpErlangObject;
 
 public class Backend extends AntidoteBackend {
 
-    Map<OtpErlangBinary, CRDT> ObjectTable = new Hashtable<>();
+    public class CRDTMapEntry<T, S> {
+        public T object;
+        public S idlist;
+
+        public CRDTMapEntry(T Object, S funcIdList) {
+            this.object = Object;
+            this.idlist = funcIdList;
+        }
+    }
+
+    Map<OtpErlangBinary, CRDTMapEntry<CRDT, HashSet<Integer>>> ObjectTable = new Hashtable<>();
 
     public Backend(String NodeName, String MailBox, String cookie) {
         super(NodeName, MailBox, cookie);
     }
 
     public OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
-        CRDT crdt_object = ObjectTable.get(JavaObjectId);
+        CRDT crdt_object = ObjectTable.get(JavaObjectId).object;
         if (crdt_object == null) {
             throw new NoSuchObjectException();
         }
-        return new OtpErlangBinary(crdt_object.read());
+        return new OtpErlangBinary(crdt_object.value());
     }
 
     public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
         if (!ObjectTable.containsKey(JavaObjectId)) {
             try {
                 CRDT crdt_object = (CRDT) binary.getObject();
-                ObjectTable.put(JavaObjectId, crdt_object);
+                CRDTMapEntry<CRDT, HashSet<Integer>> mappair = new CRDTMapEntry<CRDT, HashSet<Integer>>(crdt_object,
+                        new HashSet<Integer>());
+                ObjectTable.put(JavaObjectId, mappair);
             } catch (ClassCastException e) {
                 // We don't have the object and we have been given an update
                 // so we need to request the object from antidote and try again
@@ -37,9 +50,13 @@ public class Backend extends AntidoteBackend {
             }
         } else {
             try {
-                CRDT crdt_object = ObjectTable.get(JavaObjectId);
+                CRDT crdt_object = ObjectTable.get(JavaObjectId).object;
                 GenericFunction func = (GenericFunction) binary.getObject();
-                crdt_object.invoke(func);
+                HashSet<Integer> FunctionIdList = ObjectTable.get(JavaObjectId).idlist;
+                if (!FunctionIdList.contains(func.getId())) {
+                    crdt_object.invoke(func);
+                    FunctionIdList.add(func.getId());
+                }
             } catch (ClassCastException e) {
                 /* intentionally ignore this exception */
                 // This happens because we don't have an Idset for crdt initializations through
@@ -58,16 +75,20 @@ public class Backend extends AntidoteBackend {
 
     public OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
-        CRDT crdt_object = ObjectTable.get(JavaObjectId);
+        CRDT crdt_object = ObjectTable.get(JavaObjectId).object;
         if (crdt_object == null) {
             throw new NoSuchObjectException();
         }
 
-        OtpErlangBinary new_key = newJavaObjectId();
+        // ObjectTable.get(JavaObjectId).idlist.clear();
         // ObjectTable.remove(ERLObjectId);
-        ObjectTable.put(new_key, crdt_object);
+
+        OtpErlangBinary new_key = newJavaObjectId();
+        CRDTMapEntry<CRDT, HashSet<Integer>> mappair = new CRDTMapEntry<CRDT, HashSet<Integer>>(
+                crdt_object.deepClone(), new HashSet<Integer>());
+        ObjectTable.put(new_key, mappair);
         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
-        emptypayload[0] = new_key;
+        emptypayload[0] = JavaObjectId; // new_key;
         emptypayload[1] = new OtpErlangBinary(crdt_object);
         OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
         return new_snapshot;
@@ -168,7 +189,7 @@ public class Backend extends AntidoteBackend {
                     System.out.println("sending message");
                     myOtpMbox.send(mailbox, target, msg_init);
 
-                    System.out.println("Recieving message");
+                    System.out.println("Receiving message");
                     OtpErlangBinary ErlObjectId = (OtpErlangBinary) myOtpMbox.receive();
                     decodeErlangMessage(0, ErlObjectId);
                     break;
@@ -185,21 +206,21 @@ public class Backend extends AntidoteBackend {
                 OtpErlangTuple msg_invoke = makeErlangMessage(0, "invoke", "increment", 2);
                 System.out.println("sending invoke message");
                 myOtpMbox.send(mailbox, target, msg_invoke);
-                System.out.println("Recieving message");
+                System.out.println("Receiving message");
                 OtpErlangBinary ErlObjectId2 = (OtpErlangBinary) myOtpMbox.receive();
                 decodeErlangMessage(0, ErlObjectId2);
 
                 OtpErlangTuple msg_invoke2 = makeErlangMessage(0, "invoke", "decrement", 1);
                 System.out.println("sending invoke message");
                 myOtpMbox.send(mailbox, target, msg_invoke2);
-                System.out.println("Recieving message");
+                System.out.println("Receiving message");
                 OtpErlangBinary ErlObjectId3 = (OtpErlangBinary) myOtpMbox.receive();
                 decodeErlangMessage(0, ErlObjectId3);
 
                 OtpErlangTuple msg_invoke3 = makeErlangMessage(0, "read");
                 System.out.println("sending invoke message");
                 myOtpMbox.send(mailbox, target, msg_invoke3);
-                System.out.println("Recieving message");
+                System.out.println("Receiving message");
                 OtpErlangBinary ErlObjectId4 = (OtpErlangBinary) myOtpMbox.receive();
                 decodeErlangMessage(ErlObjectId4);
             } catch (Exception e) {
@@ -213,7 +234,7 @@ public class Backend extends AntidoteBackend {
     private void sendbin(OtpErlangBinary bin) {
         try {
             OtpErlangTuple tuple = (OtpErlangTuple) myOtpMbox.receive();
-            System.out.println("Recieved message");
+            System.out.println("Received message");
 
             last_pid = (OtpErlangPid) tuple.elementAt(0);
             System.out.println("sending message");
@@ -252,12 +273,10 @@ public class Backend extends AntidoteBackend {
         } else {
             nodename = "JavaNode@127.0.0.1";
         }
-        String target;
-        if (args.length >= 2) {
-            target = args[1];
-        } else {
-            target = "antidote@127.0.0.1";
-        }
+        /*
+         * String target; if (args.length >= 2) { target = args[1]; } else { target =
+         * "antidote@127.0.0.1"; }
+         */
         Backend backend = new Backend(nodename, "javamailbox", "antidote");
         backend.run();
 

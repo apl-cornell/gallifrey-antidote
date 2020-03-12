@@ -1,15 +1,24 @@
 import java.io.*;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class GenericFunction implements Serializable {
     private static final long serialVersionUID = 1L;
     private String FunctionName;
-    private Object Argument;
+    private List<Object> Arguments;
     private Integer Id;
 
     public GenericFunction(String FunctionName, Object Argument) {
         this.FunctionName = FunctionName;
-        this.Argument = Argument;
+        this.Arguments = new ArrayList<Object>(1);
+        this.Arguments.add(Argument);
+        this.Id = new Random().nextInt(10000000);
+    }
+
+    public GenericFunction(String FunctionName, List<Object> Argument) {
+        this.FunctionName = FunctionName;
+        this.Arguments = Argument;
         this.Id = new Random().nextInt(10000000);
     }
 
@@ -17,8 +26,8 @@ public class GenericFunction implements Serializable {
         return FunctionName;
     }
 
-    public Object getArgument() {
-        return Argument;
+    public List<Object> getArguments() {
+        return Arguments;
     }
 
     public Integer getId() {
@@ -33,7 +42,7 @@ public class GenericFunction implements Serializable {
             ObjectInputStream oos = new ObjectInputStream(f);
             func = (GenericFunction) oos.readObject();
             System.out.println(func.getFunctionName());
-            System.out.println(func.getArgument());
+            System.out.println(func.getArguments());
             oos.close();
         } catch (Exception e) {
             e.printStackTrace();
