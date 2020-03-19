@@ -3,7 +3,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import java.util.List;
 
 import java.lang.reflect.Method;
@@ -19,12 +18,7 @@ abstract class CRDT implements Antidote_interface {
       List<Object> args = obj.getArguments();
       /* Integer id = obj.getId(); */
 
-      Class<?>[] argTypes = new Class[args.size()];
-      for (int i = 0; i < args.size(); i++) {
-        argTypes[i] = args.get(i).getClass();
-      }
-
-      System.out.println(argTypes);
+      Class<?>[] argTypes = (Class[]) this.getClass().getField(method_name).get(this);
 
       Method method;
       try {

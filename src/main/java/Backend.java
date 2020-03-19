@@ -101,7 +101,7 @@ public class Backend extends AntidoteBackend {
     }
 
     // The methods below are used in testing
-
+/*
     private OtpErlangTuple makeErlangMessage(int objid, String status, String functionName, Object argument) {
         assert status.equals("invoke");
 
@@ -228,7 +228,7 @@ public class Backend extends AntidoteBackend {
                 System.exit(1);
             }
         }
-    }
+    } */
 
     // Function to help get the erlang binary representation of the blob for testing
     private void sendbin(OtpErlangBinary bin) {
