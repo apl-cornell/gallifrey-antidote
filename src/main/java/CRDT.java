@@ -6,38 +6,30 @@ import java.io.ObjectOutputStream;
 import java.util.List;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 abstract class CRDT implements Antidote_interface {
   private static final long serialVersionUID = 1L;
 
   abstract public Object value();
 
+  @Override
   public void invoke(GenericFunction obj) {
-    try {
-      String method_name = obj.getFunctionName();
-      List<Object> args = obj.getArguments();
-      /* Integer id = obj.getId(); */
+    String method_name = obj.getFunctionName();
+    List<Object> args = obj.getArguments();
 
+    try {
       Class<?>[] argTypes = (Class[]) this.getClass().getField(method_name).get(this);
 
-      Method method;
-      try {
-        method = this.getClass().getDeclaredMethod(method_name, argTypes);
+      Method method = this.getClass().getDeclaredMethod(method_name, argTypes);
 
-        method.invoke(this, args.toArray());
-      } catch (NoSuchMethodException e) {
-        // This is the case where the method has generic args
-        // Still doesn't work great
-        for (int i = 0; i < args.size(); i++) {
-          argTypes[i] = Object.class;
-        }
-
-        method = this.getClass().getDeclaredMethod(method_name, argTypes);
-        method.invoke(this, args.toArray());
-      }
-
-    } catch (Exception e) {
-      e.printStackTrace();
+      method.invoke(this, args.toArray());
+    } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
+      // If this throws then the field contains the wrong types, the field is not
+      // declared, or there is something malformed about this object
+      throw new RuntimeException(e);
+    } catch ( InvocationTargetException e) {
+      // The method returned some exception so it is now a runtime exception
       throw new RuntimeException(e);
     }
   }
@@ -59,9 +51,11 @@ abstract class CRDT implements Antidote_interface {
       ObjectInputStream ois = new ObjectInputStream(bais);
       return (CRDT) ois.readObject();
     } catch (IOException e) {
-      return null;
+      // Is fatal
+      throw new RuntimeException(e);
     } catch (ClassNotFoundException e) {
-      return null;
+      // Is fatal
+      throw new RuntimeException(e);
     }
   }
 }

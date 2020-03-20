@@ -27,6 +27,7 @@ public class Backend extends AntidoteBackend {
         super(NodeName, MailBox, cookie);
     }
 
+    @Override
     public OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         CRDT crdt_object = ObjectTable.get(JavaObjectId).object;
         if (crdt_object == null) {
@@ -35,6 +36,7 @@ public class Backend extends AntidoteBackend {
         return new OtpErlangBinary(crdt_object.value());
     }
 
+    @Override
     public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
         if (!ObjectTable.containsKey(JavaObjectId)) {
             try {
@@ -68,11 +70,13 @@ public class Backend extends AntidoteBackend {
         return JavaObjectId;
     }
 
+    @Override
     public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
         // TBD what if anything we want to do here otherwise something like this
         return binary;
     }
 
+    @Override
     public OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
         CRDT crdt_object = ObjectTable.get(JavaObjectId).object;
@@ -94,6 +98,7 @@ public class Backend extends AntidoteBackend {
         return new_snapshot;
     }
 
+    @Override
     public OtpErlangBinary newJavaObjectId() {
         byte[] b = new byte[20];
         new Random().nextBytes(b);

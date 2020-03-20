@@ -33,32 +33,4 @@ public class GenericFunction implements Serializable {
     public Integer getId() {
         return Id;
     }
-
-    public static void main(String[] args) {
-        encode();
-        try {
-            GenericFunction func;
-            FileInputStream f = new FileInputStream("file.txt");
-            ObjectInputStream oos = new ObjectInputStream(f);
-            func = (GenericFunction) oos.readObject();
-            System.out.println(func.getFunctionName());
-            System.out.println(func.getArguments());
-            oos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void encode() {
-        try {
-            GenericFunction func = new GenericFunction("dothings", 1);
-            FileOutputStream f = new FileOutputStream("file.txt");
-            ObjectOutputStream oos = new ObjectOutputStream(f);
-            oos.writeObject(func);
-            oos.close();
-            f.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

@@ -5,7 +5,7 @@ import java.util.HashSet;
 /**
  * Remove Wins Set
  */
-public class RWSet<T extends Object> extends CRDT {
+public class RWSet<T> extends CRDT {
     private static final long serialVersionUID = 1L;
     private Set<T> addset;
     private Set<T> removeset;
@@ -50,29 +50,5 @@ public class RWSet<T extends Object> extends CRDT {
         for (T elem : new ArrayList<T>(elems)) {
             addset.add(elem);
         }
-    }
-
-    public static void main(String[] args) {
-        RWSet<Integer> testSet = new RWSet<Integer>();
-        Set<Integer> val = testSet.value();
-        System.out.println(val);
-        GenericFunction func1 = new GenericFunction("add", 2);
-        testSet.invoke(func1);
-        Set<Integer> val2 = (Set<Integer>) testSet.value();
-        System.out.println(val2);
-        GenericFunction func2 = new GenericFunction("remove", 2);
-        testSet.invoke(func2);
-        Set<Integer> val3 = (Set<Integer>) testSet.value();
-        System.out.println(val3);
-
-        Set<Integer> smallSet = new HashSet<Integer>();
-        smallSet.add(4);
-        smallSet.add(5);
-
-        GenericFunction func3 = new GenericFunction("addSet", smallSet);
-        testSet.invoke(func3);
-        Set<Integer> val4 = (Set<Integer>) testSet.value();
-        System.out.println(val4);
-
     }
 }

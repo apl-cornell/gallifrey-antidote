@@ -3,15 +3,6 @@ all: build
 build: clean
 	./gradlew build
 
-counter:
-	./gradlew -PmainClass=Counter execute
-
-rwset:
-	./gradlew -PmainClass=RWSet execute
-
-function:
-	./gradlew -PmainClass=GenericFunction execute
-
 backend: build
 	./gradlew -PmainClass=Backend execute
 
