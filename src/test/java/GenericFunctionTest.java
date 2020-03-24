@@ -25,8 +25,9 @@ public class GenericFunctionTest {
             argList.add(1);
             assertEquals(argList, func2.getArguments());
             ois.close();
-        } catch (Exception e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+            assert(false);
         }
     }
 }
