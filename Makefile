@@ -14,7 +14,7 @@ send:
 	./gradlew -PmainClass=Backend execute --args='0 0 True'
 
 #test:
-#	./gradlew -PmainClass=Backend execute --args='commented out and such'
+#	./gradlew -PmainClass=BackendWithTesting execute
 
 frontend:
 	./gradlew -PmainClass=Frontend execute --args='localhost 8087'

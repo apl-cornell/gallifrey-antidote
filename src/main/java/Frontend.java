@@ -40,8 +40,6 @@ public class Frontend {
         }
     }
 
-    // may need to do some wrapping around the GenericFunction depending on how
-    // GenericKey turns out
     public void send(GenericKey k, GenericFunction f) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(f)));
