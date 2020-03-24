@@ -3,13 +3,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
 import java.util.List;
+import java.util.Random;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
 abstract class CRDT implements Antidote_interface {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = new Random().nextLong();
 
   abstract public Object value();
 

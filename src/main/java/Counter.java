@@ -1,8 +1,10 @@
+import java.util.Random;
+
 /**
  * Counter
  */
 public class Counter extends CRDT {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = new Random().nextLong();
     int count;
 
     public Class<?>[] increment = new Class[] { Integer.class };
