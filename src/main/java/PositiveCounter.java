@@ -1,10 +1,8 @@
-import java.util.Random;
-
 /**
  * An always Positive Counter
  */
 public class PositiveCounter extends CRDT {
-    private static final long serialVersionUID = new Random().nextLong();
+    private static final long serialVersionUID = 6L;
     int count;
 
     public Class<?>[] increment = new Class[] { Integer.class };

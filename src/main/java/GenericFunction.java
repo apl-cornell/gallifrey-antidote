@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class GenericFunction implements Serializable {
-    private static final long serialVersionUID = new Random().nextLong();
+    private static final long serialVersionUID = 3L;
     private String FunctionName;
     private List<Object> Arguments;
     private Integer Id;

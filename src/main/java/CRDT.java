@@ -5,13 +5,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import java.util.List;
-import java.util.Random;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
 abstract class CRDT implements Antidote_interface {
-  private static final long serialVersionUID = new Random().nextLong();
+  private static final long serialVersionUID = 2L;
 
   abstract public Object value();
 
@@ -29,8 +28,9 @@ abstract class CRDT implements Antidote_interface {
     } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
       // If this throws then the field contains the wrong types, the field is not
       // declared, or there is something malformed about this object
-      throw new RuntimeException(e);
-    } catch ( InvocationTargetException e) {
+      e.printStackTrace();
+      System.exit(42);
+    } catch (InvocationTargetException e) {
       // The method returned some exception so it is now a runtime exception
       throw new RuntimeException(e);
     }
@@ -54,10 +54,16 @@ abstract class CRDT implements Antidote_interface {
       return (CRDT) ois.readObject();
     } catch (IOException e) {
       // Is fatal
-      throw new RuntimeException(e);
+      e.printStackTrace();
+      System.exit(42);
     } catch (ClassNotFoundException e) {
       // Is fatal
-      throw new RuntimeException(e);
+      e.printStackTrace();
+      System.exit(42);
     }
+    // It shouldn't get to this but apparently the compiler says its possible because of System.exit() so we exit and hopefully don't return null
+    System.out.println("Something went horribly wrong with CRDT's deepclone implementation");
+    System.exit(42);
+    return null;
   }
 }
