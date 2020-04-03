@@ -1,14 +1,14 @@
 /**
- * Counter
+ * An always Positive Counter
  */
-public class Counter extends CRDT {
-    private static final long serialVersionUID = 1L;
+public class PositiveCounter extends CRDT {
+    private static final long serialVersionUID = 6L;
     int count;
 
     public Class<?>[] increment = new Class[] { Integer.class };
     public Class<?>[] decrement = new Class[] { Integer.class };
 
-    public Counter(int val) {
+    public PositiveCounter(int val) {
         count = val;
     }
 
@@ -21,6 +21,8 @@ public class Counter extends CRDT {
     }
 
     public void decrement(Integer val) {
-        count -= val;
+        if (count > val) {
+            count -= val;
+        }
     }
 }

@@ -8,7 +8,3 @@
  */
 
 rootProject.name = 'gallifrey-antidote'
-
-
-/*include ":antidote-java-client"
-project(":antidote-java-client").projectDir = file("../antidote-java-client")*/

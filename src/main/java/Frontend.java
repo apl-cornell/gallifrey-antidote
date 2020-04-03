@@ -1,8 +1,6 @@
 import java.io.*;
 import java.net.InetSocketAddress;
 
-import com.ericsson.otp.erlang.OtpErlangBinary;
-
 import eu.antidotedb.client.*;
 
 import com.google.protobuf.ByteString;
@@ -21,6 +19,7 @@ public class Frontend {
     }
 
     public static ByteString custom_serialization(Object obj) {
+        // import com.ericsson.otp.erlang.OtpErlangBinary;
         // new OtpErlangBinary
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
             out.writeObject(obj);
@@ -41,8 +40,6 @@ public class Frontend {
         }
     }
 
-    // may need to do some wrapping around the GenericFunction depending on how
-    // GenericKey turns out
     public void send(GenericKey k, GenericFunction f) {
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(f)));
@@ -77,13 +74,24 @@ public class Frontend {
 
     public static void main(String[] args) {
         int port;
-        try {
-            port = Integer.parseInt(args[0]);
-        } catch (Exception e) {
+        String ip;
+        String bucket;
+        if (args.length >= 1) {
+            ip = args[0];
+        } else {
+            ip = "localhost";
+        }
+        if (args.length >= 2) {
+            port = Integer.parseInt(args[1]);
+        } else {
             port = 8087;
         }
-        Frontend antidote = new Frontend("localhost", port, "my_bucket");
-        // antidote = new Frontend("localhost", 8287, "my_bucket");
+        if (args.length >= 3) {
+            bucket = args[2];
+        } else {
+            bucket = "my_bucket";
+        }
+        Frontend antidote = new Frontend(ip, port, bucket);
 
         GenericKey key = Key.generic("my_example_counter");
         Counter counter = new Counter(0);
@@ -94,7 +102,7 @@ public class Frontend {
             System.out.println(antidote.static_read(key));
             GenericFunction func2 = new GenericFunction("decrement", 1);
             antidote.static_send(key, func2);
-            System.out.println((Integer) antidote.read(key));
+            System.out.println(antidote.static_read(key));
         }
     }
 }
