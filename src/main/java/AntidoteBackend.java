@@ -4,6 +4,7 @@ import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangDecodeException;
 import com.ericsson.otp.erlang.OtpErlangExit;
 import com.ericsson.otp.erlang.OtpErlangAtom;
+import com.ericsson.otp.erlang.OtpErlangMap;
 import com.ericsson.otp.erlang.OtpErlangPid;
 import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpErlangLong;
@@ -55,7 +56,7 @@ abstract class AntidoteBackend implements Runnable {
 
     // If we want to do any analysis on the operation based on current state before
     // it becomes a valid operation.
-    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary)
+    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap time)
             throws NoSuchObjectException;
 
     public abstract OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
@@ -83,22 +84,28 @@ abstract class AntidoteBackend implements Runnable {
 
                 switch (status_enum_map[status_enum]) {
                     case read:
+                    System.out.println("Doing read");
                         myOtpMbox.send(last_pid, value(JavaObjectId));
                         break;
 
                     case update:
+                        System.out.println("Doing update");
                         myOtpMbox.send(last_pid, update(JavaObjectId, binary));
                         break;
 
                     case snapshot:
+                        System.out.println("Doing snapshot");
                         myOtpMbox.send(last_pid, snapshot(JavaObjectId));
                         break;
 
                     case downstream:
-                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary));
+                        System.out.println("Doing downstream");
+                        OtpErlangMap clock = (OtpErlangMap) payload.elementAt(3);
+                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary, clock));
                         break;
 
                     case newjavaid:
+                        System.out.println("Doing new");
                         myOtpMbox.send(last_pid, newJavaObjectId());
                         break;
                 }
