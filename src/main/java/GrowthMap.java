@@ -1,5 +1,4 @@
 import java.util.Map;
-import java.util.Random;
 import java.util.HashMap;
 
 /**
@@ -7,7 +6,7 @@ import java.util.HashMap;
  * This is mainly to show objects with methods that take more than one argument
  */
 public class GrowthMap<T, S> extends CRDT {
-    private static final long serialVersionUID = new Random().nextLong();
+    private static final long serialVersionUID = 4L;
     private Map<T, S> growthMap;
 
     public Class<?>[] add = new Class[] { Object.class, Object.class };

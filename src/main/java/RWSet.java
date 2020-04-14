@@ -1,13 +1,12 @@
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Random;
 
 /**
  * Remove Wins Set
  */
 public class RWSet<T> extends CRDT {
-    private static final long serialVersionUID = new Random().nextLong();
+    private static final long serialVersionUID = 7L;
     private Set<T> addset;
     private Set<T> removeset;
 

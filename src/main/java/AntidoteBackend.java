@@ -118,17 +118,17 @@ abstract class AntidoteBackend implements Runnable {
                 e.printStackTrace();
                 OtpErlangAtom atom = new OtpErlangAtom("error");
                 myOtpMbox.send(last_pid, atom);
+                // Maybe we should quit here
             } catch (OtpErlangRangeException e) {
                 // Invalid enum status so some macro got messed up on the antidote_crdt side
-                // The antidote side has gone down (process died) and then we recieved a message
-                e.printStackTrace();
                 OtpErlangAtom atom = new OtpErlangAtom("error");
                 myOtpMbox.send(last_pid, atom);
-                throw new RuntimeException(e);
+                e.printStackTrace();
+                System.exit(42);
             } catch (OtpErlangExit e) {
                 // The antidote side has gone down (process died) and then we recieved a message. There is nothing to respond to
                 e.printStackTrace();
-                throw new RuntimeException(e);
+                System.exit(42);
             }
         }
     }
