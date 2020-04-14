@@ -6,6 +6,7 @@ import java.util.Random;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangTuple;
+
 import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangMap;
 
@@ -13,10 +14,10 @@ public class VectorClockBackend extends AntidoteBackend {
 
     public class CRDTMapEntry {
         public CRDT object;
-        public HashSet<Integer> idlist;
-        public TreeSet<Effect> effectbuffer;
+        public HashSet<Integer> idlist; // This might be obsolete witht the effect buffer
+        public TreeSet<GenericEffect> effectbuffer;
 
-        public CRDTMapEntry(CRDT Object, HashSet<Integer> funcIdList, TreeSet<Effect> effectList) {
+        public CRDTMapEntry(CRDT Object, HashSet<Integer> funcIdList, TreeSet<GenericEffect> effectList) {
             this.object = Object;
             this.idlist = funcIdList;
             this.effectbuffer = effectList;
@@ -39,8 +40,8 @@ public class VectorClockBackend extends AntidoteBackend {
 
         // Add effects to a throwaway object to get the value
         CRDT temp_crdt_object = crdt_object.deepClone();
-        for (Effect e : ObjectTable.get(JavaObjectId).effectbuffer) {
-            temp_crdt_object.invoke((GenericFunction) e.func.getObject());
+        for (GenericEffect e : ObjectTable.get(JavaObjectId).effectbuffer) {
+            temp_crdt_object.invoke((GenericFunction) e.func);
         }
 
         return new OtpErlangBinary(temp_crdt_object.value());
@@ -50,8 +51,9 @@ public class VectorClockBackend extends AntidoteBackend {
     public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
         if (!ObjectTable.containsKey(JavaObjectId)) {
             try {
-                CRDT crdt_object = (CRDT) ((Effect) binary.getObject()).func.getObject();
-                CRDTMapEntry maptriple = new CRDTMapEntry(crdt_object, new HashSet<Integer>(), new TreeSet<Effect>());
+                CRDT crdt_object = ((CRDTEffect) binary.getObject()).crdt;
+                CRDTMapEntry maptriple = new CRDTMapEntry(crdt_object, new HashSet<Integer>(),
+                        new TreeSet<GenericEffect>());
                 ObjectTable.put(JavaObjectId, maptriple);
             } catch (ClassCastException e) {
                 // We don't have the object and we have been given an update
@@ -61,12 +63,10 @@ public class VectorClockBackend extends AntidoteBackend {
             }
         } else {
             try {
-                Effect updateEffect = (Effect) binary.getObject();
-                if (updateEffect == null) System.out.println("Effect is null");
-                OtpErlangBinary bin = updateEffect.func;
-                GenericFunction func = (GenericFunction) bin.getObject();
+                GenericEffect updateEffect = (GenericEffect) binary.getObject();
+                GenericFunction func = updateEffect.func;
                 HashSet<Integer> FunctionIdList = ObjectTable.get(JavaObjectId).idlist;
-                TreeSet<Effect> EffectList = ObjectTable.get(JavaObjectId).effectbuffer;
+                TreeSet<GenericEffect> EffectList = ObjectTable.get(JavaObjectId).effectbuffer;
                 if (!FunctionIdList.contains(func.getId())) {
                     FunctionIdList.add(func.getId());
                     EffectList.add(updateEffect);
@@ -87,7 +87,16 @@ public class VectorClockBackend extends AntidoteBackend {
         VectorClock effectClock = new VectorClock(clock);
         GlobalClockTime.maxClock(effectClock);
 
-        return new OtpErlangBinary(new Effect(binary, effectClock));
+        OtpErlangBinary bin;
+        try {
+            CRDTEffect effect = new CRDTEffect((CRDT) binary.getObject(), effectClock);
+            bin = new OtpErlangBinary(effect);
+        } catch (ClassCastException e) {
+            GenericEffect effect = new GenericEffect((GenericFunction) binary.getObject(), effectClock);
+            bin = new OtpErlangBinary(effect);
+        }
+
+        return bin;
     }
 
     @Override
@@ -105,11 +114,11 @@ public class VectorClockBackend extends AntidoteBackend {
 
         // Apply any effects that have passed the clock time to the new copy of the
         // object
-        TreeSet<Effect> new_crdt_effect_buffer = new TreeSet<Effect>();
-        for (Effect e : ObjectTable.get(JavaObjectId).effectbuffer) {
+        TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
+        for (GenericEffect e : ObjectTable.get(JavaObjectId).effectbuffer) {
             // Use a correct compare based on types
             if (e.time.lessthan(this.GlobalClockTime)) {
-                new_crdt_object.invoke((GenericFunction) e.func.getObject());
+                new_crdt_object.invoke((GenericFunction) e.func);
             } else {
                 new_crdt_effect_buffer.add(e);
             }
