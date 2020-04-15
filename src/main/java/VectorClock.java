@@ -28,7 +28,6 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
             // Each entry is {NodeName, Meta info} => positive integer
             // I think the Meta info is Key, Type, Bucket but I'm not positive... See Bound_object() in antidote.hrl
             String key = ((OtpErlangTuple) entry.getKey()).elementAt(0).toString();
-            System.out.println(key); // TODO remove
             BigInteger value = ((OtpErlangLong) entry.getValue()).bigIntegerValue();
             vectorclock.put(key, value);
         }

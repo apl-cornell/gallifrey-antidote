@@ -84,28 +84,23 @@ abstract class AntidoteBackend implements Runnable {
 
                 switch (status_enum_map[status_enum]) {
                     case read:
-                    System.out.println("Doing read");
                         myOtpMbox.send(last_pid, value(JavaObjectId));
                         break;
 
                     case update:
-                        System.out.println("Doing update");
                         myOtpMbox.send(last_pid, update(JavaObjectId, binary));
                         break;
 
                     case snapshot:
-                        System.out.println("Doing snapshot");
                         myOtpMbox.send(last_pid, snapshot(JavaObjectId));
                         break;
 
                     case downstream:
-                        System.out.println("Doing downstream");
                         OtpErlangMap clock = (OtpErlangMap) payload.elementAt(3);
                         myOtpMbox.send(last_pid, downstream(JavaObjectId, binary, clock));
                         break;
 
                     case newjavaid:
-                        System.out.println("Doing new");
                         myOtpMbox.send(last_pid, newJavaObjectId());
                         break;
                 }
