@@ -71,7 +71,6 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         allkeys.addAll(this.vectorclock.keySet());
         allkeys.addAll(c.vectorclock.keySet());
         String[] keyarray = allkeys.toArray(String[]::new);
-        /* String[] keyarray = Arrays.stream().toArray(String[]::new); */
         Arrays.sort(keyarray);
         // Try and find a key that is not equal in both clocks and use that to order
         for (String key : keyarray) {
