@@ -1,6 +1,5 @@
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.Random;
 
@@ -11,19 +10,6 @@ import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangMap;
 
 public class VectorClockBackend extends AntidoteBackend {
-
-    public class CRDTMapEntry {
-        public CRDT object;
-        public HashSet<Integer> idlist; // This might be obsolete witht the effect buffer
-        public TreeSet<GenericEffect> effectbuffer;
-
-        public CRDTMapEntry(CRDT Object, HashSet<Integer> funcIdList, TreeSet<GenericEffect> effectList) {
-            this.object = Object;
-            this.idlist = funcIdList;
-            this.effectbuffer = effectList;
-        }
-    }
-
     Map<OtpErlangBinary, CRDTMapEntry> ObjectTable = new Hashtable<>();
     VectorClock GlobalClockTime = new VectorClock();
 
@@ -52,9 +38,8 @@ public class VectorClockBackend extends AntidoteBackend {
         if (!ObjectTable.containsKey(JavaObjectId)) {
             try {
                 CRDT crdt_object = ((CRDTEffect) binary.getObject()).crdt;
-                CRDTMapEntry maptriple = new CRDTMapEntry(crdt_object, new HashSet<Integer>(),
-                        new TreeSet<GenericEffect>());
-                ObjectTable.put(JavaObjectId, maptriple);
+                CRDTMapEntry mapentry = new CRDTMapEntry(crdt_object, new TreeSet<GenericEffect>());
+                ObjectTable.put(JavaObjectId, mapentry);
             } catch (ClassCastException e) {
                 // We don't have the object and we have been given an update
                 // so we need to request the object from antidote and try again
@@ -64,13 +49,8 @@ public class VectorClockBackend extends AntidoteBackend {
         } else {
             try {
                 GenericEffect updateEffect = (GenericEffect) binary.getObject();
-                GenericFunction func = updateEffect.func;
-                HashSet<Integer> FunctionIdList = ObjectTable.get(JavaObjectId).idlist;
-                TreeSet<GenericEffect> EffectList = ObjectTable.get(JavaObjectId).effectbuffer;
-                if (!FunctionIdList.contains(func.getId())) {
-                    FunctionIdList.add(func.getId());
-                    EffectList.add(updateEffect);
-                }
+                TreeSet<GenericEffect> sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
+                sortedEffectSet.add(updateEffect);
             } catch (ClassCastException e) {
                 /* intentionally ignore this exception */
                 // This happens because we don't have an Idset for crdt initializations through
@@ -85,7 +65,7 @@ public class VectorClockBackend extends AntidoteBackend {
     @Override
     public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap clock) {
         VectorClock effectClock = new VectorClock(clock);
-        GlobalClockTime.maxClock(effectClock);
+        GlobalClockTime.updateClock(effectClock);
 
         OtpErlangBinary bin;
         try {
@@ -102,33 +82,31 @@ public class VectorClockBackend extends AntidoteBackend {
     @Override
     public OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
-        CRDT crdt_object = ObjectTable.get(JavaObjectId).object;
+        CRDTMapEntry mapentry = ObjectTable.get(JavaObjectId);
+        CRDT crdt_object = mapentry.object;
         if (crdt_object == null) {
             throw new NoSuchObjectException();
         }
-        CRDT new_crdt_object = crdt_object.deepClone();
-        OtpErlangBinary new_key = newJavaObjectId();
-
-        // ObjectTable.get(JavaObjectId).idlist.clear();
-        // ObjectTable.remove(ERLObjectId);
 
         // Apply any effects that have passed the clock time to the new copy of the
         // object
+        TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
         TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
-        for (GenericEffect e : ObjectTable.get(JavaObjectId).effectbuffer) {
+        for (GenericEffect e : crdt_effect_buffer) {
             // Use a correct compare based on types
             if (e.time.lessthan(this.GlobalClockTime)) {
-                new_crdt_object.invoke((GenericFunction) e.func);
+                crdt_object.invoke((GenericFunction) e.func);
             } else {
+                // Because I can't do concurrent modicifations to the treeset, add to a new one
+                // and replace
                 new_crdt_effect_buffer.add(e);
             }
         }
+        mapentry.effectbuffer = new_crdt_effect_buffer;
 
-        CRDTMapEntry maptriple = new CRDTMapEntry(new_crdt_object, new HashSet<Integer>(), new_crdt_effect_buffer);
-        ObjectTable.put(new_key, maptriple);
         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
-        emptypayload[0] = new_key;
-        emptypayload[1] = new OtpErlangBinary(crdt_object);
+        emptypayload[0] = JavaObjectId;
+        emptypayload[1] = new OtpErlangBinary(mapentry);
         OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
         return new_snapshot;
     }
@@ -138,6 +116,12 @@ public class VectorClockBackend extends AntidoteBackend {
         byte[] b = new byte[20];
         new Random().nextBytes(b);
         return new OtpErlangBinary(b);
+    }
+
+    @Override
+    public OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
+        ObjectTable.put(JavaObjectId, (CRDTMapEntry) binary.getObject());
+        return JavaObjectId;
     }
 
     public static void main(String[] args) {

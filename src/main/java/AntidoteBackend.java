@@ -18,7 +18,7 @@ abstract class AntidoteBackend implements Runnable {
     OtpErlangPid last_pid;
 
     public enum Status {
-        read, update, downstream, snapshot, newjavaid
+        read, update, downstream, snapshot, newjavaid, loadsnapshot
     }
 
     public AntidoteBackend() {
@@ -66,6 +66,11 @@ abstract class AntidoteBackend implements Runnable {
     // Must be 20 bytes or things will go poorly
     public abstract OtpErlangBinary newJavaObjectId();
 
+    // When we request an snapshot via NoSuchObjectException we need a function to
+    // handle the incoming snapshot appropriately because an crdt initialization may
+    // not be equal to an crdt snapshot
+    public abstract OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary);
+
     public void run() {
         System.out.println(myOtpNode);
         Status[] status_enum_map = Status.values();
@@ -103,13 +108,18 @@ abstract class AntidoteBackend implements Runnable {
                     case newjavaid:
                         myOtpMbox.send(last_pid, newJavaObjectId());
                         break;
+
+                    case loadsnapshot:
+                        myOtpMbox.send(last_pid, loadSnapshot(JavaObjectId, binary));
+                        break;
                 }
             } catch (NoSuchObjectException e) {
                 OtpErlangAtom atom = new OtpErlangAtom("getobject");
                 myOtpMbox.send(last_pid, atom);
             } catch (RuntimeException | OtpErlangDecodeException e) {
                 // Some error occured in the underlying method we tried to invoke
-                // The message we recieved was so malformed it's not readable as an erlang message
+                // The message we recieved was so malformed it's not readable as an erlang
+                // message
                 e.printStackTrace();
                 OtpErlangAtom atom = new OtpErlangAtom("error");
                 myOtpMbox.send(last_pid, atom);
@@ -121,7 +131,8 @@ abstract class AntidoteBackend implements Runnable {
                 e.printStackTrace();
                 System.exit(42);
             } catch (OtpErlangExit e) {
-                // The antidote side has gone down (process died) and then we recieved a message. There is nothing to respond to
+                // The antidote side has gone down (process died) and then we recieved a
+                // message. There is nothing to respond to
                 e.printStackTrace();
                 System.exit(42);
             }
