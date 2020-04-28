@@ -43,7 +43,7 @@ public class VectorClockBackend extends AntidoteBackend {
             } catch (ClassCastException e) {
                 // We don't have the object and we have been given an update
                 // so we need to request the object from antidote and try again
-                assert (binary.getObject().getClass() == GenericFunction.class);
+                assert (binary.getObject().getClass() == GenericEffect.class);
                 throw new NoSuchObjectException();
             }
         } else {
@@ -55,7 +55,7 @@ public class VectorClockBackend extends AntidoteBackend {
                 /* intentionally ignore this exception */
                 // This happens because we don't have an Idset for crdt initializations through
                 // updates so we got a redundant crdt object(something we already have)
-                assert (binary.getObject().getClass() == CRDT.class);
+                assert (binary.getObject().getClass() == CRDTEffect.class);
             }
         }
 
