@@ -56,8 +56,8 @@ abstract class AntidoteBackend implements Runnable {
 
     // If we want to do any analysis on the operation based on current state before
     // it becomes a valid operation.
-    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap time)
-            throws NoSuchObjectException;
+    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap time,
+            OtpErlangMap glpbal_time) throws NoSuchObjectException;
 
     public abstract OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
@@ -101,8 +101,9 @@ abstract class AntidoteBackend implements Runnable {
                         break;
 
                     case downstream:
-                        OtpErlangMap clock = (OtpErlangMap) payload.elementAt(3);
-                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary, clock));
+                        OtpErlangMap transaction_clock = (OtpErlangMap) payload.elementAt(3);
+                        OtpErlangMap global_clock = (OtpErlangMap) payload.elementAt(4);
+                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary, transaction_clock, global_clock));
                         break;
 
                     case newjavaid:

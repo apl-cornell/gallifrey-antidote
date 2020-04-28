@@ -1,7 +1,6 @@
 import java.util.Map.Entry;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.Set;
 import java.io.Serializable;
 
@@ -67,13 +66,11 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         if (c.lessthan(this))
             return 1; // greater than
         // Some kind of concurrent clock so use ordered keys to provide a total ordering
-        Set<String> allkeys = new HashSet<String>();
+        Set<String> allkeys = new TreeSet<String>();
         allkeys.addAll(this.vectorclock.keySet());
         allkeys.addAll(c.vectorclock.keySet());
-        String[] keyarray = allkeys.toArray(String[]::new);
-        Arrays.sort(keyarray);
         // Try and find a key that is not equal in both clocks and use that to order
-        for (String key : keyarray) {
+        for (String key : allkeys) {
             int comparison = this.get(key).compareTo(c.get(key));
             if (comparison != 0)
                 return comparison;

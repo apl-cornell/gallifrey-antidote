@@ -10,7 +10,7 @@ import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangMap;
 
 public class VectorClockBackend extends AntidoteBackend {
-    Map<OtpErlangBinary, CRDTMapEntry> ObjectTable = new Hashtable<>();
+    Map<OtpErlangBinary, Snapshot> ObjectTable = new Hashtable<>();
     VectorClock GlobalClockTime = new VectorClock();
 
     public VectorClockBackend(String NodeName, String MailBox, String cookie) {
@@ -38,7 +38,7 @@ public class VectorClockBackend extends AntidoteBackend {
         if (!ObjectTable.containsKey(JavaObjectId)) {
             try {
                 CRDT crdt_object = ((CRDTEffect) binary.getObject()).crdt;
-                CRDTMapEntry mapentry = new CRDTMapEntry(crdt_object, new TreeSet<GenericEffect>());
+                Snapshot mapentry = new Snapshot(crdt_object, new TreeSet<GenericEffect>());
                 ObjectTable.put(JavaObjectId, mapentry);
             } catch (ClassCastException e) {
                 // We don't have the object and we have been given an update
@@ -63,9 +63,10 @@ public class VectorClockBackend extends AntidoteBackend {
     }
 
     @Override
-    public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap clock) {
+    public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap clock,
+            OtpErlangMap global_clock) {
         VectorClock effectClock = new VectorClock(clock);
-        GlobalClockTime.updateClock(effectClock);
+        GlobalClockTime = new VectorClock(global_clock);
 
         OtpErlangBinary bin;
         try {
@@ -82,7 +83,7 @@ public class VectorClockBackend extends AntidoteBackend {
     @Override
     public OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
-        CRDTMapEntry mapentry = ObjectTable.get(JavaObjectId);
+        Snapshot mapentry = ObjectTable.get(JavaObjectId);
         CRDT crdt_object = mapentry.object;
         if (crdt_object == null) {
             throw new NoSuchObjectException();
@@ -120,7 +121,7 @@ public class VectorClockBackend extends AntidoteBackend {
 
     @Override
     public OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
-        ObjectTable.put(JavaObjectId, (CRDTMapEntry) binary.getObject());
+        ObjectTable.put(JavaObjectId, (Snapshot) binary.getObject());
         return JavaObjectId;
     }
 
