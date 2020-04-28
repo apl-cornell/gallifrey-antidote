@@ -19,7 +19,7 @@ public class VectorClockBackend extends AntidoteBackend {
 
     @Override
     public OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
-        CRDT crdt_object = ObjectTable.get(JavaObjectId).object;
+        CRDT crdt_object = ObjectTable.get(JavaObjectId).crdt;
         if (crdt_object == null) {
             throw new NoSuchObjectException();
         }
@@ -84,7 +84,7 @@ public class VectorClockBackend extends AntidoteBackend {
     public OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
         Snapshot mapentry = ObjectTable.get(JavaObjectId);
-        CRDT crdt_object = mapentry.object;
+        CRDT crdt_object = mapentry.crdt;
         if (crdt_object == null) {
             throw new NoSuchObjectException();
         }
