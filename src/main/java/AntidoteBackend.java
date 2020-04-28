@@ -57,7 +57,7 @@ abstract class AntidoteBackend implements Runnable {
     // If we want to do any analysis on the operation based on current state before
     // it becomes a valid operation.
     public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap time,
-            OtpErlangMap glpbal_time) throws NoSuchObjectException;
+            OtpErlangMap global_time) throws NoSuchObjectException;
 
     public abstract OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
