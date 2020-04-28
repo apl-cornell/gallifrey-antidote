@@ -95,7 +95,7 @@ public class VectorClockBackend extends AntidoteBackend {
         TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
         for (GenericEffect e : crdt_effect_buffer) {
             // Use a correct compare based on types
-            if (e.time.lessthan(this.GlobalClockTime)) {
+            if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))) {
                 crdt_object.invoke((GenericFunction) e.func);
             } else {
                 // Because I can't do concurrent modicifations to the treeset, add to a new one
