@@ -132,11 +132,19 @@ public class VectorClockBackend extends AntidoteBackend {
         } else {
             nodename = "JavaNode@127.0.0.1";
         }
-        /*
-         * String target; if (args.length >= 2) { target = args[1]; } else { target =
-         * "antidote@127.0.0.1"; }
-         */
+
+        String target;
+        if (args.length >= 2) {
+            target = args[1];
+        } else {
+            target = "antidote@127.0.0.1";
+        }
         VectorClockBackend backend = new VectorClockBackend(nodename, "javamailbox", "antidote");
+        if (backend.check(target)) {
+            System.out.println("The antidote client is up and running");
+        } else {
+            System.out.println("The antidote client is not up");
+        }
         backend.run();
     }
 }
