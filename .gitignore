@@ -1,7 +1,7 @@
 # test file
 file.txt
 
-#IDE things
+# IDE things
 .vscode/
 
 # Erlang ignore files

@@ -4,10 +4,10 @@ build: clean
 	./gradlew build
 
 backend: build
-	./gradlew -PmainClass=Backend execute
+	./gradlew -PmainClass=VectorClockBackend execute
 
 backend2:
-	./gradlew -PmainClass=Backend execute --args='JavaNode2@127.0.0.1'
+	./gradlew -PmainClass=VectorClockBackend execute --args='JavaNode2@127.0.0.1'
 	#./gradlew -PmainClass=Backend execute --args='JavaNode2@127.0.0.1 antidote2@127.0.0.1'
 
 #test:

@@ -4,6 +4,7 @@ import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangDecodeException;
 import com.ericsson.otp.erlang.OtpErlangExit;
 import com.ericsson.otp.erlang.OtpErlangAtom;
+import com.ericsson.otp.erlang.OtpErlangMap;
 import com.ericsson.otp.erlang.OtpErlangPid;
 import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpErlangLong;
@@ -17,7 +18,7 @@ abstract class AntidoteBackend implements Runnable {
     OtpErlangPid last_pid;
 
     public enum Status {
-        read, update, downstream, snapshot, newjavaid
+        read, update, downstream, snapshot, newjavaid, loadsnapshot
     }
 
     public AntidoteBackend() {
@@ -55,8 +56,8 @@ abstract class AntidoteBackend implements Runnable {
 
     // If we want to do any analysis on the operation based on current state before
     // it becomes a valid operation.
-    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary)
-            throws NoSuchObjectException;
+    public abstract OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap time,
+            OtpErlangMap global_time) throws NoSuchObjectException;
 
     public abstract OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException;
 
@@ -64,6 +65,11 @@ abstract class AntidoteBackend implements Runnable {
     // java object and needs a corresponding id.
     // Must be 20 bytes or things will go poorly
     public abstract OtpErlangBinary newJavaObjectId();
+
+    // When we request an snapshot via NoSuchObjectException we need a function to
+    // handle the incoming snapshot appropriately because an crdt initialization may
+    // not be equal to an crdt snapshot
+    public abstract OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary);
 
     public void run() {
         System.out.println(myOtpNode);
@@ -95,11 +101,17 @@ abstract class AntidoteBackend implements Runnable {
                         break;
 
                     case downstream:
-                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary));
+                        OtpErlangMap transaction_clock = (OtpErlangMap) payload.elementAt(3);
+                        OtpErlangMap global_clock = (OtpErlangMap) payload.elementAt(4);
+                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary, transaction_clock, global_clock));
                         break;
 
                     case newjavaid:
                         myOtpMbox.send(last_pid, newJavaObjectId());
+                        break;
+
+                    case loadsnapshot:
+                        myOtpMbox.send(last_pid, loadSnapshot(JavaObjectId, binary));
                         break;
                 }
             } catch (NoSuchObjectException e) {
@@ -107,7 +119,8 @@ abstract class AntidoteBackend implements Runnable {
                 myOtpMbox.send(last_pid, atom);
             } catch (RuntimeException | OtpErlangDecodeException e) {
                 // Some error occured in the underlying method we tried to invoke
-                // The message we recieved was so malformed it's not readable as an erlang message
+                // The message we recieved was so malformed it's not readable as an erlang
+                // message
                 e.printStackTrace();
                 OtpErlangAtom atom = new OtpErlangAtom("error");
                 myOtpMbox.send(last_pid, atom);
@@ -119,7 +132,8 @@ abstract class AntidoteBackend implements Runnable {
                 e.printStackTrace();
                 System.exit(42);
             } catch (OtpErlangExit e) {
-                // The antidote side has gone down (process died) and then we recieved a message. There is nothing to respond to
+                // The antidote side has gone down (process died) and then we recieved a
+                // message. There is nothing to respond to
                 e.printStackTrace();
                 System.exit(42);
             }
