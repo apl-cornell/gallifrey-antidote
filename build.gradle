@@ -23,8 +23,8 @@ test {
 dependencies {
     implementation fileTree(dir: 'lib', include: ['*.jar'])
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+    testImplementation 'junit:junit:4.13'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
 
     /*implement project(':antidote-java-client') I just made a jar of antidote-java-client and added that to lib since we don't really change that file*/
 }
