@@ -15,11 +15,11 @@ mkdir _checkouts
 git clone https://github.com/apl-cornell/antidote_crdt.git _checkouts/antidote_crdt
 git clone https://github.com/apl-cornell/antidote_pb_codec.git _checkouts/antidote_pb_codec
 
-sudo make compile
+make compile
 
 cd ..
 
-## you may need to run ```sudo make shell``` in a seperate terminal for the next step in the antidote directory to run tests.
+## you may need to run ```make shell``` in a seperate terminal for the next step in the antidote directory to run tests.
 
 #cd antidote-java-client
 #./gradlew build ## Alternatively you can use ```gradle build -x test```
@@ -31,7 +31,7 @@ make all
 
 ## running
 
-To start antidote instance: ```sudo make shell```
+To start antidote instance: ```make shell```
 
 To start gallifrey backend: ```make backend```
 
