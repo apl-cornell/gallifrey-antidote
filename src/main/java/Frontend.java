@@ -18,7 +18,7 @@ public class Frontend {
         this.bucket = Bucket.bucket(bucket);
     }
 
-    public static ByteString custom_serialization(Object obj) {
+    private static ByteString custom_serialization(Object obj) {
         // import com.ericsson.otp.erlang.OtpErlangBinary;
         // new OtpErlangBinary
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
@@ -30,7 +30,7 @@ public class Frontend {
         }
     }
 
-    public static Object custom_deserialization(ByteString bs) {
+    private static Object custom_deserialization(ByteString bs) {
         try (ByteArrayInputStream in = new ByteArrayInputStream(bs.toByteArray());
                 ObjectInputStream is = new ObjectInputStream(in)) {
             return is.readObject();
@@ -72,6 +72,7 @@ public class Frontend {
         return custom_deserialization(bucket.read(antidote.noTransaction(), k));
     }
 
+    // Being held on to until it's obsolete by using SharedObject and FrontendTesting
     public static void main(String[] args) {
         int port;
         String ip;

@@ -10,6 +10,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
 abstract class CRDT implements Antidote_interface {
+  /*
+   * Object has to be an instance of CRDT
+   * Make sure objects are able to use serializable(serialVersionUID)
+   * Class fields that specify the types of arguments
+   * Command query seperation
+   * Generics Handling
+   */
+
   private static final long serialVersionUID = 2L;
 
   abstract public Object value();

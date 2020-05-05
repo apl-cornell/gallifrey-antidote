@@ -89,27 +89,33 @@ public class VectorClockBackend extends AntidoteBackend {
             throw new NoSuchObjectException();
         }
 
+        CRDT new_crdt_object = crdt_object.deepClone();
+
         // Apply any effects that have passed the clock time to the new copy of the
         // object
         TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
         TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
         for (GenericEffect e : crdt_effect_buffer) {
             // Use a correct compare based on types
-            if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))) {
-                crdt_object.invoke((GenericFunction) e.func);
+            if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
+                    || this.GlobalClockTime.isEmpty()) {
+                new_crdt_object.invoke((GenericFunction) e.func);
             } else {
                 // Because I can't do concurrent modicifations to the treeset, add to a new one
                 // and replace
                 new_crdt_effect_buffer.add(e);
             }
         }
-        mapentry.effectbuffer = new_crdt_effect_buffer;
+
+        OtpErlangBinary newJavaId = newJavaObjectId();
+        Snapshot new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);
+        ObjectTable.put(newJavaId, new_snapshot);
 
         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
-        emptypayload[0] = JavaObjectId;
-        emptypayload[1] = new OtpErlangBinary(mapentry);
-        OtpErlangTuple new_snapshot = new OtpErlangTuple(emptypayload);
-        return new_snapshot;
+        emptypayload[0] = newJavaId;
+        emptypayload[1] = new OtpErlangBinary(new_snapshot);
+        OtpErlangTuple new_antidote_snapshot = new OtpErlangTuple(emptypayload);
+        return new_antidote_snapshot;
     }
 
     @Override

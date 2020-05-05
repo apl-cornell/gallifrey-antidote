@@ -59,6 +59,10 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         return true;
     }
 
+    public boolean isEmpty(){
+        return this.vectorclock.isEmpty();
+    }
+
     @Override
     public int compareTo(VectorClock c) {
         if (this.lessthan(c))
