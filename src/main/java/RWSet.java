@@ -10,12 +10,13 @@ public class RWSet<T> extends CRDT {
     private Set<T> addset;
     private Set<T> removeset;
 
-    public Class<?>[] add = new Class[] { Object.class };
-    public Class<?>[] addSet = new Class[] { Set.class };
-    public Class<?>[] remove = new Class[] { Object.class };
-    public Class<?>[] removeSet = new Class[] { Set.class };
+    public final Class<?>[] add = new Class[] { Object.class };
+    public final Class<?>[] addSet = new Class[] { Set.class };
+    public final Class<?>[] remove = new Class[] { Object.class };
+    public final Class<?>[] removeSet = new Class[] { Set.class };
 
     public RWSet() {
+        super();
         addset = new HashSet<T>();
         removeset = new HashSet<T>();
     }

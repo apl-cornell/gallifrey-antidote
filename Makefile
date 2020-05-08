@@ -4,6 +4,7 @@ build: clean
 	./gradlew build
 
 backend: build
+	rmiregistry &
 	./gradlew -PmainClass=VectorClockBackend execute
 
 backend2:

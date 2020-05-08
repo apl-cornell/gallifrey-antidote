@@ -1,28 +1,35 @@
-import eu.antidotedb.client.*;
+import eu.antidotedb.client.GenericKey;
 
 import java.util.List;
-import java.util.Random;
-
-import com.google.protobuf.ByteString;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 
 public class SharedObject {
 
     Frontend frontend;
     GenericKey key;
+    RMIInterface rmiBackend;
+
 
     // Shared[increment] Counter c = new Counter();
     // ->
-    // SharedObject s = new SharedObject(antidote, new Counter());
+    // SharedObject s = new SharedObject(antidote, new Counter(), "/JavaBackend");
     // where antidote = new Frontend(ip, port, bucket);
     // which is created somewhere else
-    public SharedObject(Frontend frontend, CRDT crdt) {
+    // and the backend
+    public SharedObject(Frontend frontend, CRDT crdt, String backend) {
         this.frontend = frontend;
+        this.key = crdt.key;
 
-        Random rd = new Random();
-        byte[] random_bytes = new byte[10];
-        rd.nextBytes(random_bytes);
-        ByteString random_key = ByteString.copyFrom(random_bytes);
-        this.key = Key.generic(random_key);
+        try {
+            rmiBackend = (RMIInterface) Naming.lookup(backend);
+        } catch (NotBoundException | MalformedURLException | RemoteException e) {
+            System.out.println("Something happend when trying to look up the backend");
+            e.printStackTrace();
+            System.exit(21);
+        }
 
         frontend.static_send(key, crdt);
     }
@@ -45,8 +52,8 @@ public class SharedObject {
     // s.call("func", [arg1, arg2, ...]);
     public void call(String FunctionName, List<Object> Arguments) {
         // Restriction
-        GenericFunction func2 = new GenericFunction(FunctionName, Arguments);
-        frontend.static_send(key, func2);
+        GenericFunction func = new GenericFunction(FunctionName, Arguments);
+        frontend.static_send(key, func);
     }
 
     // c.value();
@@ -60,13 +67,16 @@ public class SharedObject {
     // ->
     // doSomething(s.getObject(some_identifier_here));
     // Presumably there is a method here which talks to the backend directly and gets the object
-/*     public CRDT getObject() {
-        value();
-        backend.getObject(some_identifier_we_have);
-    } */
-
     // java rmi
-/*     public Object dosideeffectfreemethod() {
+    public Object dosideeffectfreemethod(String FunctionName, List<Object> Arguments) {
+        GenericFunction func = new GenericFunction(FunctionName, Arguments);
+        try {
+            return rmiBackend.rmiOperation(this.key, func);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.exit(21);
+            return null;
+        }
 
-    } */
+    }
 }

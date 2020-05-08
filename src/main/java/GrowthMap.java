@@ -9,10 +9,11 @@ public class GrowthMap<T, S> extends CRDT {
     private static final long serialVersionUID = 4L;
     private Map<T, S> growthMap;
 
-    public Class<?>[] add = new Class[] { Object.class, Object.class };
-    public Class<?>[] addMap = new Class[] { Map.class };
+    public final Class<?>[] add = new Class[] { Object.class, Object.class };
+    public final Class<?>[] addMap = new Class[] { Map.class };
 
     public GrowthMap() {
+        super();
         growthMap = new HashMap<T, S>();
     }
 

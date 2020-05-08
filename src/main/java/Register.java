@@ -5,9 +5,10 @@ public class Register<T> extends CRDT{
     private static final long serialVersionUID = 13L;
     private T value;
 
-    public Class<?>[] assign = new Class[] { Object.class };
+    public final Class<?>[] assign = new Class[] { Object.class };
 
     public Register(T value) {
+        super();
         this.value = value;
     }
 

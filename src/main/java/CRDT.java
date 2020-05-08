@@ -9,6 +9,13 @@ import java.util.List;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
+import eu.antidotedb.client.Key;
+import eu.antidotedb.client.GenericKey;
+
+import java.util.Random;
+
+import com.google.protobuf.ByteString;
+
 abstract class CRDT implements Antidote_interface {
   /*
    * Object has to be an instance of CRDT
@@ -20,10 +27,20 @@ abstract class CRDT implements Antidote_interface {
 
   private static final long serialVersionUID = 2L;
 
+  public final GenericKey key;
+
+  public CRDT(){
+    Random rd = new Random();
+    byte[] random_bytes = new byte[10];
+    rd.nextBytes(random_bytes);
+    ByteString random_key = ByteString.copyFrom(random_bytes);
+    this.key = Key.generic(random_key);
+  }
+
   abstract public Object value();
 
   @Override
-  public void invoke(GenericFunction obj) {
+  public Object invoke(GenericFunction obj) {
     String method_name = obj.getFunctionName();
     List<Object> args = obj.getArguments();
 
@@ -32,12 +49,13 @@ abstract class CRDT implements Antidote_interface {
 
       Method method = this.getClass().getDeclaredMethod(method_name, argTypes);
 
-      method.invoke(this, args.toArray());
+      return method.invoke(this, args.toArray());
     } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
       // If this throws then the field contains the wrong types, the field is not
       // declared, or there is something malformed about this object
       e.printStackTrace();
-      System.exit(42);
+      System.exit(47);
+      return null;
     } catch (InvocationTargetException e) {
       // The method returned some exception so it is now a runtime exception
       throw new RuntimeException(e);
@@ -63,15 +81,15 @@ abstract class CRDT implements Antidote_interface {
     } catch (IOException e) {
       // Is fatal
       e.printStackTrace();
-      System.exit(42);
+      System.exit(41);
     } catch (ClassNotFoundException e) {
       // Is fatal
       e.printStackTrace();
-      System.exit(42);
+      System.exit(48);
     }
     // It shouldn't get to this but apparently the compiler says its possible because of System.exit() so we exit and hopefully don't return null
     System.out.println("Something went horribly wrong with CRDT's deepclone implementation");
-    System.exit(42);
+    System.exit(43);
     return null;
   }
 }

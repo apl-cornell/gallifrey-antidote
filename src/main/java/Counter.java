@@ -5,10 +5,11 @@ public class Counter extends CRDT {
     private static final long serialVersionUID = 1L;
     int count;
 
-    public Class<?>[] increment = new Class[] { Integer.class };
-    public Class<?>[] decrement = new Class[] { Integer.class };
+    public final Class<?>[] increment = new Class[] { Integer.class };
+    public final Class<?>[] decrement = new Class[] { Integer.class };
 
     public Counter(int val) {
+        super();
         count = val;
     }
 

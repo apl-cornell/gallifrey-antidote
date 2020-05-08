@@ -12,7 +12,11 @@ import com.ericsson.otp.erlang.OtpErlangRangeException;
 import com.ericsson.otp.erlang.OtpMbox;
 import com.ericsson.otp.erlang.OtpNode;
 
-abstract class AntidoteBackend implements Runnable {
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+abstract class AntidoteBackend extends UnicastRemoteObject implements Runnable, RMIInterface {
+    private static final long serialVersionUID = 15L;
     final OtpMbox myOtpMbox;
     final OtpNode myOtpNode;
     OtpErlangPid last_pid;
@@ -21,7 +25,7 @@ abstract class AntidoteBackend implements Runnable {
         read, update, downstream, snapshot, newjavaid, loadsnapshot
     }
 
-    public AntidoteBackend() {
+    public AntidoteBackend() throws RemoteException {
         try {
             myOtpNode = new OtpNode("JavaNode");
             myOtpNode.setCookie("antidote");
@@ -33,7 +37,7 @@ abstract class AntidoteBackend implements Runnable {
         }
     }
 
-    public AntidoteBackend(String NodeName, String MailBox, String cookie) {
+    public AntidoteBackend(String NodeName, String MailBox, String cookie) throws RemoteException {
         try {
             // KEEP THIS
             // If the next line raises an exception, you need to get empd running

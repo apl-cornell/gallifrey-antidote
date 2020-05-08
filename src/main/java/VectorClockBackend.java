@@ -9,11 +9,19 @@ import com.ericsson.otp.erlang.OtpErlangTuple;
 import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangMap;
 
+import eu.antidotedb.client.GenericKey;
+
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+
 public class VectorClockBackend extends AntidoteBackend {
+    private static final long serialVersionUID = 16L;
     Map<OtpErlangBinary, Snapshot> ObjectTable = new Hashtable<>();
+    Map<GenericKey, OtpErlangBinary> KeyTable = new Hashtable<>();
     VectorClock GlobalClockTime = new VectorClock();
 
-    public VectorClockBackend(String NodeName, String MailBox, String cookie) {
+    public VectorClockBackend(String NodeName, String MailBox, String cookie) throws RemoteException {
         super(NodeName, MailBox, cookie);
     }
 
@@ -40,6 +48,7 @@ public class VectorClockBackend extends AntidoteBackend {
                 CRDT crdt_object = ((CRDTEffect) binary.getObject()).crdt;
                 Snapshot mapentry = new Snapshot(crdt_object, new TreeSet<GenericEffect>());
                 ObjectTable.put(JavaObjectId, mapentry);
+                KeyTable.put(crdt_object.key, JavaObjectId);
             } catch (ClassCastException e) {
                 // We don't have the object and we have been given an update
                 // so we need to request the object from antidote and try again
@@ -110,12 +119,21 @@ public class VectorClockBackend extends AntidoteBackend {
         OtpErlangBinary newJavaId = newJavaObjectId();
         Snapshot new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);
         ObjectTable.put(newJavaId, new_snapshot);
+        KeyTable.put(new_crdt_object.key, newJavaId);
 
         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
         emptypayload[0] = newJavaId;
         emptypayload[1] = new OtpErlangBinary(new_snapshot);
         OtpErlangTuple new_antidote_snapshot = new OtpErlangTuple(emptypayload);
         return new_antidote_snapshot;
+    }
+
+    @Override
+    public Object rmiOperation(GenericKey key, GenericFunction func) throws RemoteException {
+        OtpErlangBinary JavaObjectId = KeyTable.get(key);
+        Snapshot mapentry = ObjectTable.get(JavaObjectId);
+        CRDT crdt_object = mapentry.crdt;
+        return crdt_object.invoke(func);
     }
 
     @Override
@@ -127,7 +145,9 @@ public class VectorClockBackend extends AntidoteBackend {
 
     @Override
     public OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
-        ObjectTable.put(JavaObjectId, (Snapshot) binary.getObject());
+        Snapshot s = (Snapshot) binary.getObject();
+        ObjectTable.put(JavaObjectId, s);
+        KeyTable.put(s.crdt.key, JavaObjectId);
         return JavaObjectId;
     }
 
@@ -145,12 +165,17 @@ public class VectorClockBackend extends AntidoteBackend {
         } else {
             target = "antidote@127.0.0.1";
         }
-        VectorClockBackend backend = new VectorClockBackend(nodename, "javamailbox", "antidote");
-        if (backend.check(target)) {
-            System.out.println("The antidote client is up and running");
-        } else {
-            System.out.println("The antidote client is not up");
+        try {
+            VectorClockBackend backend = new VectorClockBackend(nodename, "javamailbox", "antidote");
+            Naming.rebind("/JavaBackend", backend);
+            if (backend.check(target)) {
+                System.out.println("The antidote client is up and running");
+            } else {
+                System.out.println("The antidote client is not up");
+            }
+            backend.run();
+        } catch (RemoteException | MalformedURLException e) {
+            e.printStackTrace();
         }
-        backend.run();
     }
 }
