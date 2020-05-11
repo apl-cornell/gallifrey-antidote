@@ -23,6 +23,7 @@ abstract class CRDT implements Antidote_interface {
    * Class fields that specify the types of arguments
    * Command query seperation
    * Generics Handling
+   * Call super();
    */
 
   private static final long serialVersionUID = 2L;

@@ -12,7 +12,6 @@ public class SharedObject {
     GenericKey key;
     RMIInterface rmiBackend;
 
-
     // Shared[increment] Counter c = new Counter();
     // ->
     // SharedObject s = new SharedObject(antidote, new Counter(), "/JavaBackend");
@@ -50,7 +49,7 @@ public class SharedObject {
     // c.func(arg1, arg2, ...);
     // ->
     // s.call("func", [arg1, arg2, ...]);
-    public void call(String FunctionName, List<Object> Arguments) {
+    public void void_call(String FunctionName, List<Object> Arguments) {
         // Restriction
         GenericFunction func = new GenericFunction(FunctionName, Arguments);
         frontend.static_send(key, func);
@@ -68,7 +67,7 @@ public class SharedObject {
     // doSomething(s.getObject(some_identifier_here));
     // Presumably there is a method here which talks to the backend directly and gets the object
     // java rmi
-    public Object dosideeffectfreemethod(String FunctionName, List<Object> Arguments) {
+    public Object const_call(String FunctionName, List<Object> Arguments) {
         GenericFunction func = new GenericFunction(FunctionName, Arguments);
         try {
             return rmiBackend.rmiOperation(this.key, func);
@@ -77,6 +76,5 @@ public class SharedObject {
             System.exit(21);
             return null;
         }
-
     }
 }
