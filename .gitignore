@@ -3,6 +3,7 @@ file.txt
 
 # IDE things
 .vscode/
+.settings
 
 # Erlang ignore files
 .eunit
@@ -41,3 +42,4 @@ rel/example_project
 
 # Ignore Gradle build output directory
 build
+bin
