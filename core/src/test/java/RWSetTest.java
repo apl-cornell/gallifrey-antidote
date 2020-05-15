@@ -11,16 +11,17 @@ public class RWSetTest {
     public void test() {
         RWSet<Integer> testSet = new RWSet<Integer>(Integer.class);
         CRDT crdt = new CRDT(testSet);
+        GenericFunction readfunc = new GenericFunction("value");
         HashSet<Integer> expectedSet = new HashSet<Integer>();
-        assertEquals(expectedSet, (Set<Integer>) crdt.value());
+        assertEquals(expectedSet, (Set<Integer>) crdt.invoke(readfunc));
         GenericFunction func1 = new GenericFunction("add", 2);
         crdt.invoke(func1);
         expectedSet.add(2);
-        assertEquals(expectedSet, (Set<Integer>) crdt.value());
+        assertEquals(expectedSet, (Set<Integer>) crdt.invoke(readfunc));
         GenericFunction func2 = new GenericFunction("remove", 2);
         crdt.invoke(func2);
         expectedSet.remove(2);
-        assertEquals(expectedSet, (Set<Integer>) crdt.value());
+        assertEquals(expectedSet, (Set<Integer>) crdt.invoke(readfunc));
 
         Set<Integer> smallSet = new HashSet<Integer>();
         smallSet.add(4);
@@ -31,6 +32,6 @@ public class RWSetTest {
         for (Integer elem : new ArrayList<Integer>(smallSet)) {
             expectedSet.add(elem);
         }
-        assertEquals(expectedSet, (Set<Integer>) crdt.value());
+        assertEquals(expectedSet, (Set<Integer>) crdt.invoke(readfunc));
     }
 }

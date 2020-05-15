@@ -7,6 +7,11 @@ public class GenericFunction implements Serializable {
     private String FunctionName;
     private List<Object> Arguments;
 
+    public GenericFunction(String FunctionName) {
+        this.FunctionName = FunctionName;
+        this.Arguments = new ArrayList<Object>();
+    }
+
     public GenericFunction(String FunctionName, Object Argument) {
         this.FunctionName = FunctionName;
         this.Arguments = new ArrayList<Object>(1);

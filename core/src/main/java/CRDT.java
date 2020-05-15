@@ -45,23 +45,6 @@ class CRDT implements Antidote_interface {
     this.key = Key.generic(somehash);
   }
 
-  public Object value() {
-    try {
-      Method method = this.shared_object.getClass().getDeclaredMethod("value");
-
-      return method.invoke(this.shared_object);
-    } catch (NoSuchMethodException | IllegalAccessException e) {
-      // If this throws then the object does not have a method called value, or there
-      // is something malformed about this shared object
-      e.printStackTrace();
-      System.exit(52);
-      return null;
-    } catch (InvocationTargetException e) {
-      // The method returned some exception so it is now a runtime exception
-      throw new RuntimeException(e);
-    }
-  }
-
   @Override
   public Object invoke(GenericFunction obj) {
     String method_name = obj.getFunctionName();

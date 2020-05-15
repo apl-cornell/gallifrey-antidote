@@ -18,10 +18,20 @@ subprojects {
     }
 }
 
+project(':core') {
+    dependencies {
+        implementation fileTree(dir: '../lib', include: ['*.jar'])
+
+        testImplementation 'junit:junit:4.13'
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
+    }
+}
+
 project(':backend') {
     dependencies {
         implementation fileTree(dir: '../lib', include: ['*.jar'])
         implementation project(':core')
+
         testImplementation 'junit:junit:4.13'
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
     }
@@ -32,20 +42,10 @@ project(':backend') {
     }
 }
 
-project(':core') {
-    dependencies {
-        implementation fileTree(dir: '../lib', include: ['*.jar'])
-
-        testImplementation 'junit:junit:4.13'
-        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
-    }
-}
-
 project(':frontend') {
     dependencies {
         implementation fileTree(dir: '../lib', include: ['*.jar'])
         implementation project(':core')
-
 
         testImplementation 'junit:junit:4.13'
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'

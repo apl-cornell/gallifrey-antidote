@@ -12,7 +12,8 @@ public class GrowthMapTest {
         GrowthMap<String, Integer> testMap = new GrowthMap<String, Integer>();
         CRDT crdt = new CRDT(testMap);
         Map<String, Integer> expectedMap = new HashMap<String, Integer>();
-        assertEquals(expectedMap, (Map<String, Integer>) crdt.value());
+        GenericFunction readfunc = new GenericFunction("value");
+        assertEquals(expectedMap, (Map<String, Integer>) crdt.invoke(readfunc));
 
         List<Object> args1 = new ArrayList<Object>();
         args1.add("two");
@@ -20,7 +21,7 @@ public class GrowthMapTest {
         GenericFunction func1 = new GenericFunction("add", args1);
         crdt.invoke(func1);
         expectedMap.put("two", 2);
-        assertEquals(expectedMap, (Map<String, Integer>) crdt.value());
+        assertEquals(expectedMap, (Map<String, Integer>) crdt.invoke(readfunc));
 
         GrowthMap<String, Integer> testMap2 = new GrowthMap<String, Integer>();
         CRDT crdt2 = new CRDT(testMap2);
@@ -31,11 +32,11 @@ public class GrowthMapTest {
         GenericFunction func2 = new GenericFunction("add", args2);
         crdt2.invoke(func2);
         expectedMap2.put("three", 3);
-        assertEquals(expectedMap2, (Map<String, Integer>) crdt2.value());
+        assertEquals(expectedMap2, (Map<String, Integer>) crdt2.invoke(readfunc));
 
         GenericFunction func3 = new GenericFunction("addMap", expectedMap2);
         crdt.invoke(func3);
         expectedMap.putAll(expectedMap2);
-        assertEquals(expectedMap, (Map<String, Integer>) crdt.value());
+        assertEquals(expectedMap, (Map<String, Integer>) crdt.invoke(readfunc));
     }
 }

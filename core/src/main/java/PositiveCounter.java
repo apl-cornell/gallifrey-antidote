@@ -7,7 +7,7 @@ public class PositiveCounter implements Serializable {
     private static final long serialVersionUID = 6L;
     int count;
 
-    public final Class<?>[] value = new Class[] { Object.class };
+    public final Class<?>[] value = new Class[] { };
     public final Class<?>[] increment = new Class[] { Integer.class };
     public final Class<?>[] decrement = new Class[] { Integer.class };
 

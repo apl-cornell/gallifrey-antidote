@@ -5,5 +5,7 @@ interface Antidote_interface extends Serializable {
     Object invoke(GenericFunction obj);
 
     // read the current value of the CRDT
-    Object value();
+    // We no longer use this since we give antidote a dummy read value and read the
+    // value of the object ourselves via rmi
+    // Object value();
 }

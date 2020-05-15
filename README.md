@@ -19,14 +19,15 @@ make compile
 
 cd ..
 
-## you may need to run ```make shell``` in a separate terminal for the next step in the antidote directory to run tests.
+## You may need to run ```make shell``` in a separate terminal for the next step in the antidote directory to run tests.
 
 #cd antidote-java-client
 #./gradlew build ## Alternatively you can use ```gradle build -x test```
 #cd ..
 
 cd gallifrey-antidote
-## you may need to run ```make shell``` and ```make backend``` in separate terminals for the next step in the antidote directory to run tests.
+## You may need to run ```make shell``` and ```make backend``` in separate terminals in the antidote directory and this directory respectively to run tests.
+## Alternatively you could disable tests on build in gradle
 make all
 ```
 

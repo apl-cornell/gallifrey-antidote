@@ -1,9 +1,14 @@
 all: build
 
-buildfrontend:
+# buildcore is added because apparently gradle does not run the tests of subprojects it builds for the current project its building
+
+buildcore:
+	./gradlew :core:build
+
+buildfrontend: buildcore
 	./gradlew :frontend:build
 
-buildbackend:
+buildbackend: buildcore
 	./gradlew :backend:build
 
 build: clean buildbackend buildfrontend

@@ -10,10 +10,11 @@ public class RegisterTest {
     public void test() {
         Register<String> testRegister1 = new Register<String>("hello");
         CRDT crdt = new CRDT(testRegister1);
-        assertEquals("hello", (String) crdt.value());
+        GenericFunction readfunc = new GenericFunction("value");
+        assertEquals("hello", (String) crdt.invoke(readfunc));
         GenericFunction func1 = new GenericFunction("assign", "goodbye");
         crdt.invoke(func1);
-        assertEquals("goodbye", (String) crdt.value());
+        assertEquals("goodbye", (String) crdt.invoke(readfunc));
 
         // Issue that needs to be addressed at the compiler level
         HashSet<Integer> testSet = new HashSet<Integer>();
@@ -21,10 +22,10 @@ public class RegisterTest {
 
         Register<HashSet<Integer>> testRegister2 = new Register<HashSet<Integer>>(testSet);
         CRDT crdt2 = new CRDT(testRegister2);
-        assertEquals(testSet, (HashSet<Integer>) crdt2.value());
+        assertEquals(testSet, (HashSet<Integer>) crdt2.invoke(readfunc));
         testSet.add(42);
         GenericFunction func2 = new GenericFunction("assign", testSet);
         crdt2.invoke(func2);
-        assertEquals(testSet, (HashSet<Integer>) crdt2.value());
+        assertEquals(testSet, (HashSet<Integer>) crdt2.invoke(readfunc));
     }
 }
