@@ -3,8 +3,6 @@ import org.junit.Test;
 import eu.antidotedb.client.GenericKey;
 import eu.antidotedb.client.Key;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.Random;
 
 import com.google.protobuf.ByteString;

@@ -13,12 +13,11 @@ public class SharedObjectSimpleTest {
             List<Object> args1 = new ArrayList<Object>();
             args1.add(2);
             obj.void_call("increment", args1);
-            List<Object> args2 = new ArrayList<Object>();
-            assertEquals(i + 1, obj.const_call("value", args2));
+            assertEquals(i + 1, obj.const_call("value"));
             List<Object> args3 = new ArrayList<Object>();
             args3.add(1);
             obj.void_call("decrement", args3);
-            assertEquals(i, obj.const_call("value", args2));
+            assertEquals(i, obj.const_call("value"));
         }
     }
 }

@@ -21,8 +21,7 @@ public class SharedObjectMapTest {
         assertEquals(true, obj.const_call("containsKey", args2));
         assertEquals(1, obj.const_call("get", args2));
 
-        List<Object> args3 = new ArrayList<Object>();
-        HashMap<String, Integer> map2 = (HashMap<String, Integer>) obj.const_call("value", args3);
+        HashMap<String, Integer> map2 = (HashMap<String, Integer>) obj.const_call("value");
 
         SharedMap<String, Integer> map3 = new SharedMap<String, Integer>(map2);
         SharedObject obj2 = new SharedObject(map3);

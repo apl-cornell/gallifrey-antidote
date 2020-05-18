@@ -3,6 +3,7 @@
 help: ## Show this help
 	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: all
 all: build ## Alias of build
 
 # buildcore is added because apparently gradle does not run the tests of subprojects it builds for the current project its building
@@ -16,7 +17,8 @@ buildfrontend: buildcore
 buildbackend: buildcore
 	./gradlew :backend:build
 
-build: clean buildbackend buildfrontend ## Build the project
+.PHONY: build
+build: buildbackend buildfrontend ## Build the project
 
 backend: buildbackend ## Creates a running backend instance that Antidote can connect to
 	./gradlew :backend:execute -PmainClass=VectorClockBackend
@@ -35,5 +37,6 @@ frontend: buildfrontend
 #frontend2:
 	#./gradlew -PmainClass=Frontend execute --args='localhost 8287'
 
+.PHONY: clean
 clean: ## Has gradle clean it's build files
 	./gradlew clean

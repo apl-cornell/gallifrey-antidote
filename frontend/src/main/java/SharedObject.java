@@ -87,28 +87,43 @@ public class SharedObject implements Serializable {
         getFrontend().static_send(key, crdt);
     }
 
+    // c.func();
+    // ->
+    // s.void_call("func");
+    public void void_call(String FunctionName) {
+        // Restriction
+        GenericFunction func = new GenericFunction(FunctionName);
+        getFrontend().static_send(key, func);
+    }
+
     // c.func(arg1, arg2, ...);
     // ->
-    // s.call("func", [arg1, arg2, ...]);
+    // s.void_call("func", [arg1, arg2, ...]);
     public void void_call(String FunctionName, List<Object> Arguments) {
         // Restriction
         GenericFunction func = new GenericFunction(FunctionName, Arguments);
         getFrontend().static_send(key, func);
     }
 
-    // c.value();
+    // c.doSomethingSideEffectFree();
     // ->
-    // s.value();
-    public Object value() {
-        return getFrontend().static_read(key);
+    // (Object) s.const_call("doSomethingSideEffectFree");
+    public Object const_call(String FunctionName) {
+        // Flushes any waithing operations to the backend
+        getFrontend().static_read(key);
+        GenericFunction func = new GenericFunction(FunctionName);
+        try {
+            return getBackend().rmiOperation(this.key, func);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.exit(22);
+            return null;
+        }
     }
 
-    // doSomething(c);
+    // c.doSomethingSideEffectFree(arg1, arg2, ...);
     // ->
-    // doSomething(s.getObject(some_identifier_here));
-    // Presumably there is a method here which talks to the backend directly and
-    // gets the object
-    // java rmi
+    // (Object) s.const_call("doSomethingSideEffectFree", [arg1, arg2, ...]);
     public Object const_call(String FunctionName, List<Object> Arguments) {
         // Flushes any waithing operations to the backend
         getFrontend().static_read(key);
