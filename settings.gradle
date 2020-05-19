@@ -8,4 +8,4 @@
  */
 
 rootProject.name = 'gallifrey-antidote'
-include 'core', 'backend', 'frontend'
+include 'gallifrey:core', 'gallifrey:backend', 'gallifrey:frontend'

@@ -18,19 +18,19 @@ subprojects {
     }
 }
 
-project(':core') {
+project(':gallifrey:core') {
     dependencies {
-        implementation fileTree(dir: '../lib', include: ['*.jar'])
+        implementation fileTree(dir: '../../lib', include: ['*.jar'])
 
         testImplementation 'junit:junit:4.13'
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
     }
 }
 
-project(':backend') {
+project(':gallifrey:backend') {
     dependencies {
-        implementation fileTree(dir: '../lib', include: ['*.jar'])
-        implementation project(':core')
+        implementation fileTree(dir: '../../lib', include: ['*.jar'])
+        implementation project(':gallifrey:core')
 
         testImplementation 'junit:junit:4.13'
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
@@ -42,10 +42,10 @@ project(':backend') {
     }
 }
 
-project(':frontend') {
+project(':gallifrey:frontend') {
     dependencies {
-        implementation fileTree(dir: '../lib', include: ['*.jar'])
-        implementation project(':core')
+        implementation fileTree(dir: '../../lib', include: ['*.jar'])
+        implementation project(':gallifrey:core')
 
         testImplementation 'junit:junit:4.13'
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
@@ -55,4 +55,10 @@ project(':frontend') {
         main = project.hasProperty("mainClass") ? getProperty("mainClass") : "NULL"
         classpath = sourceSets.main.runtimeClasspath
     }
+
+    task fatJar(type: Jar) {
+    subprojects.each { subproject ->
+        from subproject.configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 }

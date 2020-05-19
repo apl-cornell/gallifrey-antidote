@@ -9,19 +9,20 @@ all: build ## Alias of build
 # buildcore is added because apparently gradle does not run the tests of subprojects it builds for the current project its building
 
 buildcore:
-	./gradlew :core:build
+	./gradlew :gallifrey:core:build
 
 buildfrontend: buildcore
-	./gradlew :frontend:build
+	./gradlew :gallifrey:frontend:build
 
 buildbackend: buildcore
-	./gradlew :backend:build
+	./gradlew :gallifrey:backend:build
 
 .PHONY: build
 build: buildbackend buildfrontend ## Build the project
 
+.PHONY: backend
 backend: buildbackend ## Creates a running backend instance that Antidote can connect to
-	./gradlew :backend:execute -PmainClass=VectorClockBackend
+	./gradlew :gallifrey:backend:execute -PmainClass='gallifrey.backend.VectorClockBackend'
 	#./gradlew -PmainClass=VectorClockBackend execute
 
 #backend2:
@@ -31,8 +32,9 @@ backend: buildbackend ## Creates a running backend instance that Antidote can co
 #test:
 #	./gradlew -PmainClass=BackendWithTesting execute
 
+.PHONY: frontend
 frontend: buildfrontend
-	./gradlew :frontend:execute -PmainClass=Frontend --args='localhost 8087' --stacktrace
+	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.Demo'
 
 #frontend2:
 	#./gradlew -PmainClass=Frontend execute --args='localhost 8287'
