@@ -55,10 +55,4 @@ project(':gallifrey:frontend') {
         main = project.hasProperty("mainClass") ? getProperty("mainClass") : "NULL"
         classpath = sourceSets.main.runtimeClasspath
     }
-
-    task fatJar(type: Jar) {
-    subprojects.each { subproject ->
-        from subproject.configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-}
 }

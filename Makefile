@@ -42,3 +42,9 @@ frontend: buildfrontend
 .PHONY: clean
 clean: ## Has gradle clean it's build files
 	./gradlew clean
+	rm fatjar.jar || true
+	rm -r fatjar || true
+
+.PHONY: fatjar
+fatjar: ## Make sure you build before you try to make the jar file
+	./fatjar.sh fatjar.jar
