@@ -43,3 +43,7 @@ build
 bin
 .classpath
 .project
+
+# Ignore jar related stuff so people have to build it each time
+fatjar
+fatjar.jar
