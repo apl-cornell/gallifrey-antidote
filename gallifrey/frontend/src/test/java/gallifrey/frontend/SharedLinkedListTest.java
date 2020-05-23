@@ -7,6 +7,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
+import gallifrey.core.*;
+
 public class SharedLinkedListTest {
     @Test
     public void test() {
@@ -28,7 +30,8 @@ public class SharedLinkedListTest {
         List<Object> args1 = new ArrayList<Object>();
         args1.add(obj2);
         obj1.void_call("setNext", args1);
-        assertEquals(obj2, obj1.const_call("getNext"));
+        SharedObject objnext = (SharedObject) obj1.const_call("getNext");
+        assertEquals(obj2.key, objnext.key);
 
         // Update node 2 on it's own
         List<Object> args2 = new ArrayList<Object>();
@@ -37,7 +40,7 @@ public class SharedLinkedListTest {
 
         // Follow the path of node 1 to node 2 and confirm that the value changed
         SharedObject next_val = (SharedObject) obj1.const_call("getNext");
-        assertEquals(obj2, next_val);
+        assertEquals(obj2.key, next_val.key);
         assertEquals("changed data value", next_val.const_call("getData"));
         assertEquals(null, next_val.const_call("getNext"));
     }

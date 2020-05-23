@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import gallifrey.core.SharedMap;
+import gallifrey.core.SharedObject;
 
 public class SharedObjectMapTest {
     @Test

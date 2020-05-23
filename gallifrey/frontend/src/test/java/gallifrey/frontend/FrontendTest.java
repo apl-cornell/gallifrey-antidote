@@ -11,6 +11,7 @@ import com.google.protobuf.ByteString;
 
 import gallifrey.core.CRDT;
 import gallifrey.core.Counter;
+import gallifrey.core.Frontend;
 import gallifrey.core.GenericFunction;
 
 public class FrontendTest {
@@ -38,6 +39,7 @@ public class FrontendTest {
             antidote.static_send(key, func);
             GenericFunction func2 = new GenericFunction("decrement", 1);
             antidote.static_send(key, func2);
+            antidote.static_read(key);
         }
     }
 }

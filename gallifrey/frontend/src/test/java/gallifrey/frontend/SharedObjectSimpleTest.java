@@ -7,7 +7,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
-import gallifrey.core.Counter;
+import gallifrey.core.*;
 
 public class SharedObjectSimpleTest {
     @Test

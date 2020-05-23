@@ -1,4 +1,4 @@
-package gallifrey.frontend;
+package gallifrey.core;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -6,9 +6,6 @@ import java.net.InetSocketAddress;
 import eu.antidotedb.client.*;
 
 import com.google.protobuf.ByteString;
-
-import gallifrey.core.CRDT;
-import gallifrey.core.GenericFunction;
 
 /**
  * Frontend

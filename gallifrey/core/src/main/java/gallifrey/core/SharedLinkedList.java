@@ -1,4 +1,4 @@
-package gallifrey.frontend;
+package gallifrey.core;
 
 import java.io.Serializable;
 

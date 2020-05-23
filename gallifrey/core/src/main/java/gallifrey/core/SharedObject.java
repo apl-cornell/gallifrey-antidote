@@ -1,4 +1,4 @@
-package gallifrey.frontend;
+package gallifrey.core;
 
 import eu.antidotedb.client.GenericKey;
 
@@ -6,24 +6,18 @@ import java.util.List;
 
 import com.google.protobuf.ByteString;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
-import gallifrey.core.GenericFunction;
-import gallifrey.core.CRDT;
-import gallifrey.core.RMIInterface;
-
 public class SharedObject implements Serializable {
     private static final long serialVersionUID = 17L;
     private static Frontend frontend;
     private static RMIInterface rmiBackend;
-    GenericKey key;
+    String str;
+    public GenericKey key;
 
     private static Frontend getFrontend() {
         if (frontend == null) {
@@ -73,6 +67,7 @@ public class SharedObject implements Serializable {
     public SharedObject(Object SharedObject) {
         CRDT crdt = new CRDT(SharedObject);
         this.key = crdt.key;
+        this.str = "hello";
 
         // Tell antidote about this new shared object
         getFrontend().static_send(key, crdt);
@@ -141,13 +136,5 @@ public class SharedObject implements Serializable {
             System.exit(22);
             return null;
         }
-    }
-
-    private void readObject(ObjectInputStream aInputStream) throws ClassNotFoundException, IOException {
-        this.key = (GenericKey) aInputStream.readObject();
-    }
-
-    private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
-        aOutputStream.writeObject(this.key);
     }
 }

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import gallifrey.core.SharedMap;
+import gallifrey.core.*;
 
 public class Demo {
     public static void main(String[] args) {
