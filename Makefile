@@ -21,8 +21,10 @@ buildbackend: buildcore
 build: buildbackend buildfrontend ## Build the project
 
 .PHONY: backend
-backend: buildbackend ## Creates a running backend instance that Antidote can connect to
-	./gradlew :gallifrey:backend:execute -PmainClass='gallifrey.backend.VectorClockBackend'
+backend: buildbackend  ## Creates a running backend instance that Antidote can connect to
+	# The exported class below is just an example.
+	# If you want to try it out, move Counter.java from core to frontend and adjust package names, imports, and tests
+	export EXTERNAL_CLASSES="../frontend/build/classes/java/main" && ./gradlew :gallifrey:backend:execute -PmainClass='gallifrey.backend.VectorClockBackend'
 	#./gradlew -PmainClass=VectorClockBackend execute
 
 #backend2:

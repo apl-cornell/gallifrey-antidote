@@ -34,9 +34,14 @@ project(':gallifrey:backend') {
 
         testImplementation 'junit:junit:4.13'
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
+        runtime files(String.valueOf(System.getenv('EXTERNAL_CLASSES')))
     }
 
     task execute(type:JavaExec) {
+/*         doFirst{
+            sourceSets.main.runtimeClasspath.each { println it}
+            println String.valueOf(System.getenv('EXTERNAL_CLASSES'))
+        } */
         main = project.hasProperty("mainClass") ? getProperty("mainClass") : "NULL"
         classpath = sourceSets.main.runtimeClasspath
     }
