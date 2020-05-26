@@ -19,13 +19,15 @@ make compile
 
 cd ..
 
-## you may need to run ```make shell``` in a seperate terminal for the next step in the antidote directory to run tests.
+## You may need to run ```make shell``` in a separate terminal for the next step in the antidote directory to run tests.
 
 #cd antidote-java-client
 #./gradlew build ## Alternatively you can use ```gradle build -x test```
 #cd ..
 
 cd gallifrey-antidote
+## You may need to run ```make shell``` and ```make backend``` in separate terminals in the antidote directory and this directory respectively to run tests.
+## Alternatively you could disable tests on build in gradle
 make all
 ```
 
@@ -63,7 +65,16 @@ rpc:call('antidote@128.253.3.197', antidote_dc_manager, subscribe_updates_from, 
 
 ## troubleshooting
 
+### Nameserver exception
+
 If you get something like:
 ```java.io.IOException: Nameserver not responding on 127.0.0.1 when publishing JavaNode```
 
-You need to run ```erl -sname putwhateveryouwant``` and then exit to get erlang epmd running
+You need to run ```erl -sname putwhateveryouwant``` and then exit to get erlang epmd running or just run the antidote shell you fool.
+
+### Socket exception
+
+If you get something like:
+```eu.antidotedb.client.SocketSender$AntidoteSocketException: java.io.IOException: End of input while data expected```
+
+Then your antidote instance you are running is not a gallifrey instance or at some point the protocol buffers have been changed such that the protobuf-java jar isn't compatible with antidote's version.

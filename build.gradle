@@ -5,31 +5,59 @@
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
 
-apply plugin: 'java'
+subprojects {
+    apply plugin: 'java'
 
-sourceSets {
-    main.java.srcDirs = ['src/main/java']
-    test.java.srcDirs = ['src/test/java']
+    repositories {
+        mavenCentral()
+    }
+
+    sourceSets {
+        main.java.srcDirs = ['src/main/java']
+        test.java.srcDirs = ['src/test/java']
+    }
 }
 
-repositories {
-    mavenCentral()
+project(':gallifrey:core') {
+    dependencies {
+        implementation fileTree(dir: '../../lib', include: ['*.jar'])
+
+        testImplementation 'junit:junit:4.13'
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
+    }
 }
 
-test {
-    useJUnitPlatform()
+project(':gallifrey:backend') {
+    dependencies {
+        implementation fileTree(dir: '../../lib', include: ['*.jar'])
+        implementation project(':gallifrey:core')
+
+        testImplementation 'junit:junit:4.13'
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
+        runtime files(String.valueOf(System.getenv('EXTERNAL_CLASSES')))
+    }
+
+    task execute(type:JavaExec) {
+/*         doFirst{
+            sourceSets.main.runtimeClasspath.each { println it}
+            println String.valueOf(System.getenv('EXTERNAL_CLASSES'))
+        } */
+        main = project.hasProperty("mainClass") ? getProperty("mainClass") : "NULL"
+        classpath = sourceSets.main.runtimeClasspath
+    }
 }
 
-dependencies {
-    implementation fileTree(dir: 'lib', include: ['*.jar'])
+project(':gallifrey:frontend') {
+    dependencies {
+        implementation fileTree(dir: '../../lib', include: ['*.jar'])
+        implementation project(':gallifrey:core')
 
-    testImplementation 'junit:junit:4.13'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
+        testImplementation 'junit:junit:4.13'
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
+    }
 
-    /*implement project(':antidote-java-client') I just made a jar of antidote-java-client and added that to lib since we don't really change that file*/
-}
-
-task execute(type:JavaExec) {
-   main = project.hasProperty("mainClass") ? getProperty("mainClass") : "NULL"
-   classpath = sourceSets.main.runtimeClasspath
+    task execute(type:JavaExec) {
+        main = project.hasProperty("mainClass") ? getProperty("mainClass") : "NULL"
+        classpath = sourceSets.main.runtimeClasspath
+    }
 }

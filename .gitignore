@@ -3,6 +3,7 @@ file.txt
 
 # IDE things
 .vscode/
+.settings
 
 # Erlang ignore files
 .eunit
@@ -36,8 +37,13 @@ rel/example_project
 *.tar.gz
 *.rar
 
-# Ignore Gradle project-specific cache directory
+# Ignore Gradle/VScode project-specific cache directory
 .gradle
-
-# Ignore Gradle build output directory
 build
+bin
+.classpath
+.project
+
+# Ignore jar related stuff so people have to build it each time
+fatjar
+fatjar.jar
