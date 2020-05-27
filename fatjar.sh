@@ -1,9 +1,11 @@
 #!/bin/bash
 
 if echo $1 | egrep -q "\.jar$"; then
-    echo buliding $1
+    echo building $1
+    jarname=$1
 else
-    echo "Error: required <name>.jar argument"
+    echo "Warning: assuming full-runtime.jar is desired name"
+    jarname=full-runtime.jar
     exit 1
 fi
 
@@ -12,4 +14,4 @@ unzip -o 'lib/*' -d fatjar
 unzip -o gallifrey/core/build/libs/core.jar -d fatjar
 unzip -o gallifrey/backend/build/libs/backend.jar -d fatjar
 unzip -o gallifrey/frontend/build/libs/frontend.jar -d fatjar
-cd fatjar && zip -r "$1" gallifrey/* eu/* com/* && mv "$1" ..
+cd fatjar && zip -r "$jarname" gallifrey/* eu/* com/* && mv "$jarname" ..
