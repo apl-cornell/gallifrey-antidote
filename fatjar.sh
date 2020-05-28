@@ -6,7 +6,6 @@ if echo $1 | egrep -q "\.jar$"; then
 else
     echo "Warning: assuming full-runtime.jar is desired name"
     jarname=full-runtime.jar
-    exit 1
 fi
 
 rm -r fatjar || true
