@@ -26,6 +26,8 @@ public class VectorClockBackend extends AntidoteBackend {
     Map<OtpErlangBinary, Snapshot> ObjectTable = new Hashtable<>();
     Map<GenericKey, OtpErlangBinary> KeyTable = new Hashtable<>();
     VectorClock GlobalClockTime = new VectorClock();
+    VectorClock LastDownstreamTime = new VectorClock();
+    VectorClock LastUpdateTime = new VectorClock();
 
     public VectorClockBackend(String NodeName, String MailBox, String cookie) throws RemoteException {
         super(NodeName, MailBox, cookie);
@@ -55,7 +57,10 @@ public class VectorClockBackend extends AntidoteBackend {
     public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
         if (!ObjectTable.containsKey(JavaObjectId)) {
             try {
-                CRDT crdt_object = ((CRDTEffect) binary.getObject()).crdt;
+                CRDTEffect crdt_effect = (CRDTEffect) binary.getObject();
+                CRDT crdt_object = crdt_effect.crdt;
+                LastUpdateTime.updateClock(crdt_effect.time);
+
                 Snapshot mapentry = new Snapshot(crdt_object, new TreeSet<GenericEffect>());
                 ObjectTable.put(JavaObjectId, mapentry);
                 if (crdt_object == null) {
@@ -74,6 +79,7 @@ public class VectorClockBackend extends AntidoteBackend {
         } else {
             try {
                 GenericEffect updateEffect = (GenericEffect) binary.getObject();
+                LastUpdateTime.updateClock(updateEffect.time);
                 TreeSet<GenericEffect> sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
                 sortedEffectSet.add(updateEffect);
             } catch (ClassCastException e) {
@@ -92,6 +98,7 @@ public class VectorClockBackend extends AntidoteBackend {
             OtpErlangMap global_clock) {
         VectorClock effectClock = new VectorClock(clock);
         GlobalClockTime = new VectorClock(global_clock);
+        LastDownstreamTime.updateClock(effectClock);
 
         OtpErlangBinary bin;
         try {
@@ -146,6 +153,14 @@ public class VectorClockBackend extends AntidoteBackend {
 
     @Override
     public Object rmiOperation(GenericKey key, GenericFunction func) throws RemoteException {
+        while ((LastUpdateTime.lessthan(LastDownstreamTime)) && (LastUpdateTime.lessthan(GlobalClockTime))){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         OtpErlangBinary JavaObjectId = KeyTable.get(key);
         Snapshot mapentry = ObjectTable.get(JavaObjectId);
         CRDT crdt_object = mapentry.crdt;

@@ -38,6 +38,12 @@ backend: buildbackend  ## Creates a running backend instance that Antidote can c
 frontend: buildfrontend
 	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.Demo'
 
+.PHONY: counter
+counter:
+	# ./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithSetName'
+	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithTwoObjects'
+
+
 #frontend2:
 	#./gradlew -PmainClass=Frontend execute --args='localhost 8287'
 
