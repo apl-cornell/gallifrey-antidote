@@ -39,7 +39,7 @@ frontend: buildfrontend
 	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.Demo'
 
 .PHONY: counter
-counter:
+counter: buildfrontend
 	# ./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithSetName'
 	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithTwoObjects'
 
