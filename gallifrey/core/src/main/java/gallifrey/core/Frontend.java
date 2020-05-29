@@ -14,6 +14,7 @@ public class Frontend {
 
     AntidoteClient antidote;
     Bucket bucket;
+    GenericKey LastUpdatedKey;
 
     public Frontend(String hostname, int port, String bucket) {
         this.antidote = new AntidoteClient(new InetSocketAddress(hostname, port));
@@ -43,6 +44,7 @@ public class Frontend {
     }
 
     public void send(GenericKey k, GenericFunction f) {
+        LastUpdatedKey = k;
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(f)));
             tx.commitTransaction();
@@ -50,10 +52,12 @@ public class Frontend {
     }
 
     public void static_send(GenericKey k, GenericFunction f) {
+        LastUpdatedKey = k;
         bucket.update(antidote.noTransaction(), k.invoke(custom_serialization(f)));
     }
 
     public void send(GenericKey k, CRDT obj) {
+        LastUpdatedKey = k;
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.update(tx, k.invoke(custom_serialization(obj)));
             tx.commitTransaction();
@@ -61,16 +65,20 @@ public class Frontend {
     }
 
     public void static_send(GenericKey k, CRDT obj) {
+        LastUpdatedKey = k;
         bucket.update(antidote.noTransaction(), k.invoke(custom_serialization(obj)));
     }
 
     public Object read(GenericKey k) {
+
         try (InteractiveTransaction tx = antidote.startTransaction()) {
+            bucket.read(tx, LastUpdatedKey);
             return custom_deserialization(bucket.read(tx, k));
         }
     }
 
     public Object static_read(GenericKey k) {
+        custom_deserialization(bucket.read(antidote.noTransaction(), LastUpdatedKey));
         return custom_deserialization(bucket.read(antidote.noTransaction(), k));
     }
 }
