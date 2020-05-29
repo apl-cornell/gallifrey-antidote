@@ -40,12 +40,6 @@ public class VectorClockBackend extends AntidoteBackend {
             throw new NoSuchObjectException();
         }
 
-        // Add effects to a throwaway object to get the value
-        CRDT temp_crdt_object = crdt_object.deepClone();
-        for (GenericEffect e : ObjectTable.get(JavaObjectId).effectbuffer) {
-            temp_crdt_object.invoke((GenericFunction) e.func);
-        }
-
         // So we don't actually want to give antidote the object since it can be pretty
         // big. Instead, we are just going to return true and if someone wants the
         // actual object/some field/part of it they can use the rmiOperation method via
@@ -164,7 +158,14 @@ public class VectorClockBackend extends AntidoteBackend {
         OtpErlangBinary JavaObjectId = KeyTable.get(key);
         Snapshot mapentry = ObjectTable.get(JavaObjectId);
         CRDT crdt_object = mapentry.crdt;
-        return crdt_object.invoke(func);
+
+        // Add effects to a throwaway object to get the value
+        CRDT temp_crdt_object = crdt_object.deepClone();
+        for (GenericEffect e : ObjectTable.get(JavaObjectId).effectbuffer) {
+            temp_crdt_object.invoke((GenericFunction) e.func);
+        }
+
+        return temp_crdt_object.invoke(func);
     }
 
     @Override
