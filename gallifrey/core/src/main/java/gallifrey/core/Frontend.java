@@ -70,7 +70,6 @@ public class Frontend {
     }
 
     public Object read(GenericKey k) {
-
         try (InteractiveTransaction tx = antidote.startTransaction()) {
             bucket.read(tx, LastUpdatedKey);
             return custom_deserialization(bucket.read(tx, k));

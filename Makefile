@@ -39,9 +39,9 @@ frontend: buildfrontend
 	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.Demo'
 
 .PHONY: counter
-counter: buildfrontend
-	# ./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithSetName'
-	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithTwoObjects'
+counter:
+	./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithSetName'
+	# ./gradlew :gallifrey:frontend:execute -PmainClass='gallifrey.frontend.DemoWithTwoObjects'
 
 
 #frontend2:
@@ -53,6 +53,7 @@ clean: ## Has gradle clean it's build files
 	rm fatjar.jar || true
 	rm -r fatjar || true
 	rm -r gallifrey/*/bin || true
+	rm gallifrey/*/file.txt || true
 
 .PHONY: fatjar
 fatjar: ## Make sure you build before you try to make the jar file

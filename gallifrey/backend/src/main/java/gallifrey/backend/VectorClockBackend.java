@@ -81,6 +81,8 @@ public class VectorClockBackend extends AntidoteBackend {
                 // This happens because we don't have an Idset for crdt initializations through
                 // updates so we got a redundant crdt object(something we already have)
                 assert (binary.getObject().getClass() == CRDTEffect.class);
+                CRDTEffect crdt_effect = (CRDTEffect) binary.getObject();
+                LastUpdateTime.updateClock(crdt_effect.time);
             }
         }
 
@@ -147,7 +149,7 @@ public class VectorClockBackend extends AntidoteBackend {
 
     @Override
     public Object rmiOperation(GenericKey key, GenericFunction func) throws RemoteException {
-        while ((LastUpdateTime.lessthan(LastDownstreamTime)) && (LastUpdateTime.lessthan(GlobalClockTime))){
+        while (LastUpdateTime.lessthan(LastDownstreamTime)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
