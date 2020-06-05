@@ -24,6 +24,7 @@ import gallifrey.core.CRDT;
 public class VectorClockBackend extends AntidoteBackend {
     private static final long serialVersionUID = 16L;
     Map<OtpErlangBinary, Snapshot> ObjectTable = new Hashtable<>();
+    Map<OtpErlangBinary, TreeSet<GenericEffect>> MisssingObjectTable = new Hashtable<>();
     Map<GenericKey, OtpErlangBinary> KeyTable = new Hashtable<>();
     VectorClock GlobalClockTime = new VectorClock();
     VectorClock LastDownstreamTime = new VectorClock();
@@ -55,7 +56,14 @@ public class VectorClockBackend extends AntidoteBackend {
                 CRDT crdt_object = crdt_effect.crdt;
                 LastUpdateTime.updateClock(crdt_effect.time);
 
-                Snapshot mapentry = new Snapshot(crdt_object, new TreeSet<GenericEffect>());
+                TreeSet<GenericEffect> e_set = new TreeSet<GenericEffect>();
+
+                if (MisssingObjectTable.containsKey(JavaObjectId)) {
+                    e_set = MisssingObjectTable.get(JavaObjectId);
+                    MisssingObjectTable.remove(JavaObjectId);
+                }
+
+                Snapshot mapentry = new Snapshot(crdt_object, e_set);
                 ObjectTable.put(JavaObjectId, mapentry);
                 if (crdt_object == null) {
                     System.out.println("object is null");
@@ -68,7 +76,14 @@ public class VectorClockBackend extends AntidoteBackend {
                 // We don't have the object and we have been given an update
                 // so we need to request the object from antidote and try again
                 assert (binary.getObject().getClass() == GenericEffect.class);
-                throw new NoSuchObjectException();
+
+                if (MisssingObjectTable.containsKey(JavaObjectId)) {
+                    GenericEffect updateEffect = (GenericEffect) binary.getObject();
+                    TreeSet<GenericEffect> e_set = MisssingObjectTable.get(JavaObjectId);
+                    e_set.add(updateEffect);
+                } else {
+                    throw new NoSuchObjectException();
+                }
             }
         } else {
             try {
@@ -180,8 +195,12 @@ public class VectorClockBackend extends AntidoteBackend {
     @Override
     public OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
         Snapshot s = (Snapshot) binary.getObject();
-        ObjectTable.put(JavaObjectId, s);
-        KeyTable.put(s.crdt.key, JavaObjectId);
+        if (s == null) {
+            MisssingObjectTable.put(JavaObjectId, new TreeSet<>());
+        } else {
+            ObjectTable.put(JavaObjectId, s);
+            KeyTable.put(s.crdt.key, JavaObjectId);
+        }
         return JavaObjectId;
     }
 
