@@ -9,6 +9,7 @@ import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangMap;
 import com.ericsson.otp.erlang.OtpErlangPid;
 import com.ericsson.otp.erlang.OtpErlangTuple;
+import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangLong;
 import com.ericsson.otp.erlang.OtpErlangRangeException;
 import com.ericsson.otp.erlang.OtpMbox;
@@ -30,6 +31,27 @@ abstract class AntidoteBackend extends UnicastRemoteObject implements Runnable, 
 
     public enum Status {
         read, update, downstream, snapshot, newjavaid, loadsnapshot
+    }
+
+    public OtpErlangTuple createBackendMessage(OtpErlangBinary bin) {
+        OtpErlangObject[] backendMessage = new OtpErlangObject[2];
+        backendMessage[0] = new OtpErlangAtom("javaBackendMessage");
+        backendMessage[1] = bin;
+        return new OtpErlangTuple(backendMessage);
+    }
+
+    public OtpErlangTuple createBackendMessage(OtpErlangAtom atom) {
+        OtpErlangObject[] backendMessage = new OtpErlangObject[2];
+        backendMessage[0] = new OtpErlangAtom("javaBackendMessage");
+        backendMessage[1] = atom;
+        return new OtpErlangTuple(backendMessage);
+    }
+
+    public OtpErlangTuple createBackendMessage(OtpErlangTuple tuple) {
+        OtpErlangObject[] backendMessage = new OtpErlangObject[2];
+        backendMessage[0] = new OtpErlangAtom("javaBackendMessage");
+        backendMessage[1] = tuple;
+        return new OtpErlangTuple(backendMessage);
     }
 
     public AntidoteBackend() throws RemoteException {
@@ -98,50 +120,52 @@ abstract class AntidoteBackend extends UnicastRemoteObject implements Runnable, 
                 // Antidote sends the JavaId, operation, and binary args
                 OtpErlangBinary JavaObjectId = (OtpErlangBinary) payload.elementAt(0);
                 int status_enum = ((OtpErlangLong) payload.elementAt(1)).intValue();
+                // Could be null depending on message type(see status_enum)
                 OtpErlangBinary binary = (OtpErlangBinary) payload.elementAt(2);
 
                 switch (status_enum_map[status_enum]) {
                     case read:
-                        myOtpMbox.send(last_pid, value(JavaObjectId));
+                        myOtpMbox.send(last_pid, createBackendMessage(value(JavaObjectId)));
                         break;
 
                     case update:
-                        myOtpMbox.send(last_pid, update(JavaObjectId, binary));
+                        myOtpMbox.send(last_pid, createBackendMessage(update(JavaObjectId, binary)));
                         break;
 
                     case snapshot:
-                        myOtpMbox.send(last_pid, snapshot(JavaObjectId));
+                        myOtpMbox.send(last_pid, createBackendMessage(snapshot(JavaObjectId)));
                         break;
 
                     case downstream:
                         OtpErlangMap transaction_clock = (OtpErlangMap) payload.elementAt(3);
                         OtpErlangMap global_clock = (OtpErlangMap) payload.elementAt(4);
-                        myOtpMbox.send(last_pid, downstream(JavaObjectId, binary, transaction_clock, global_clock));
+                        myOtpMbox.send(last_pid,
+                                createBackendMessage(downstream(JavaObjectId, binary, transaction_clock, global_clock)));
                         break;
 
                     case newjavaid:
-                        myOtpMbox.send(last_pid, newJavaObjectId());
+                        myOtpMbox.send(last_pid, createBackendMessage(newJavaObjectId()));
                         break;
 
                     case loadsnapshot:
-                        myOtpMbox.send(last_pid, loadSnapshot(JavaObjectId, binary));
+                        myOtpMbox.send(last_pid, createBackendMessage(loadSnapshot(JavaObjectId, binary)));
                         break;
                 }
             } catch (NoSuchObjectException e) {
                 OtpErlangAtom atom = new OtpErlangAtom("getobject");
-                myOtpMbox.send(last_pid, atom);
+                myOtpMbox.send(last_pid, createBackendMessage(atom));
             } catch (RuntimeException | OtpErlangDecodeException e) {
                 // Some error occured in the underlying method we tried to invoke
                 // The message we recieved was so malformed it's not readable as an erlang
                 // message
                 e.printStackTrace();
                 OtpErlangAtom atom = new OtpErlangAtom("error");
-                myOtpMbox.send(last_pid, atom);
+                myOtpMbox.send(last_pid, createBackendMessage(atom));
                 // Maybe we should quit here
             } catch (OtpErlangRangeException e) {
                 // Invalid enum status so some macro got messed up on the antidote_crdt side
                 OtpErlangAtom atom = new OtpErlangAtom("error");
-                myOtpMbox.send(last_pid, atom);
+                myOtpMbox.send(last_pid, createBackendMessage(atom));
                 e.printStackTrace();
                 System.exit(42);
             } catch (OtpErlangExit e) {
