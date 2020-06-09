@@ -1,6 +1,7 @@
 package gallifrey.backend;
 
 import java.io.Serializable;
+import gallifrey.core.VectorClock;
 
 // Antidote calls the processed update after downstream an "effect" that can
 // then be applied to the crdt so that's the terminology I'm using for now

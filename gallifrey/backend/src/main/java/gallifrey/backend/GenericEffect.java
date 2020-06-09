@@ -1,6 +1,7 @@
 package gallifrey.backend;
 
 import gallifrey.core.GenericFunction;
+import gallifrey.core.VectorClock;
 
 public class GenericEffect extends Effect {
     private static final long serialVersionUID = 11L;

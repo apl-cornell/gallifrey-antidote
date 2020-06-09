@@ -18,15 +18,19 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 
-import gallifrey.core.GenericFunction;
+import gallifrey.core.BackendRequiresFlushException;
 import gallifrey.core.CRDT;
+import gallifrey.core.VectorClock;
+import gallifrey.core.GenericFunction;
 
 public class VectorClockBackend extends AntidoteBackend {
     private static final long serialVersionUID = 16L;
     Map<OtpErlangBinary, Snapshot> ObjectTable = new Hashtable<>();
     Map<OtpErlangBinary, TreeSet<GenericEffect>> MisssingObjectTable = new Hashtable<>();
-    Map<GenericKey, OtpErlangBinary> KeyTable = new Hashtable<>();
+    BidirectionalMap<GenericKey, OtpErlangBinary> KeyTable = new BidirectionalMap<>();
+
     VectorClock GlobalClockTime = new VectorClock();
+    OtpErlangBinary LastDownstreamJavaId;
     VectorClock LastDownstreamTime = new VectorClock();
     VectorClock LastUpdateTime = new VectorClock();
 
@@ -109,6 +113,8 @@ public class VectorClockBackend extends AntidoteBackend {
             OtpErlangMap global_clock) {
         VectorClock effectClock = new VectorClock(clock);
         GlobalClockTime = new VectorClock(global_clock);
+
+        LastDownstreamJavaId = JavaObjectId;
         LastDownstreamTime.updateClock(effectClock);
 
         OtpErlangBinary bin;
@@ -162,16 +168,7 @@ public class VectorClockBackend extends AntidoteBackend {
         return new_antidote_snapshot;
     }
 
-    @Override
-    public Object rmiOperation(GenericKey key, GenericFunction func) throws RemoteException {
-        while (LastUpdateTime.lessthan(LastDownstreamTime)) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
+    public Object doRmiOperation(GenericKey key, GenericFunction func) {
         OtpErlangBinary JavaObjectId = KeyTable.get(key);
         Snapshot mapentry = ObjectTable.get(JavaObjectId);
         CRDT crdt_object = mapentry.crdt;
@@ -183,6 +180,37 @@ public class VectorClockBackend extends AntidoteBackend {
         }
 
         return temp_crdt_object.invoke(func);
+    }
+
+    @Override
+    public Object rmiOperation(GenericKey key, GenericFunction func) throws RemoteException, BackendRequiresFlushException {
+        VectorClock currentDownstreamTime = LastDownstreamTime;
+
+        if (LastUpdateTime.lessthan(currentDownstreamTime)) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (LastUpdateTime.lessthan(currentDownstreamTime)) {
+                throw new BackendRequiresFlushException(KeyTable.getKey(LastDownstreamJavaId), LastDownstreamTime);
+            }
+        }
+
+        return doRmiOperation(key, func);
+    }
+
+    @Override
+    public Object rmiOperation(GenericKey key, GenericFunction func, VectorClock DownstreamTime) throws RemoteException {
+        while (LastUpdateTime.lessthan(DownstreamTime)) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return doRmiOperation(key, func);
     }
 
     @Override

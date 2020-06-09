@@ -115,6 +115,15 @@ public class SharedObject implements Serializable {
         GenericFunction func = new GenericFunction(FunctionName);
         try {
             return getBackend().rmiOperation(this.key, func);
+        } catch (BackendRequiresFlushException b) {
+            getFrontend().static_read(b.key);
+            try {
+                return getBackend().rmiOperation(this.key, func, b.time);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                System.exit(99);
+                return null;
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
             System.exit(22);
@@ -131,6 +140,15 @@ public class SharedObject implements Serializable {
         GenericFunction func = new GenericFunction(FunctionName, Arguments);
         try {
             return getBackend().rmiOperation(this.key, func);
+        } catch (BackendRequiresFlushException b) {
+            getFrontend().static_read(b.key);
+            try {
+                return getBackend().rmiOperation(this.key, func, b.time);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                System.exit(99);
+                return null;
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
             System.exit(22);
