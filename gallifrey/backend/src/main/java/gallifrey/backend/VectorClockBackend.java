@@ -177,14 +177,14 @@ public class VectorClockBackend extends AntidoteBackend {
     }
 
     @Override
-    public Object rmiOperation(GenericKey key, GenericFunction func) throws RemoteException, BackendRequiresFlushException {
+    public Object rmiOperation(GenericKey key, GenericFunction func)
+            throws RemoteException, BackendRequiresFlushException {
         VectorClock currentDownstreamTime = LastDownstreamTime;
 
         if (LastUpdateTime.lessthan(currentDownstreamTime)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
             }
             if (LastUpdateTime.lessthan(currentDownstreamTime)) {
                 throw new BackendRequiresFlushException(KeyTable.getKey(LastDownstreamJavaId), LastDownstreamTime);
@@ -195,12 +195,12 @@ public class VectorClockBackend extends AntidoteBackend {
     }
 
     @Override
-    public Object rmiOperation(GenericKey key, GenericFunction func, VectorClock DownstreamTime) throws RemoteException {
+    public Object rmiOperation(GenericKey key, GenericFunction func, VectorClock DownstreamTime)
+            throws RemoteException {
         while (LastUpdateTime.lessthan(DownstreamTime)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         }
 
