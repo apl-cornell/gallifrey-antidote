@@ -69,12 +69,6 @@ public class VectorClockBackend extends AntidoteBackend {
 
                 Snapshot mapentry = new Snapshot(crdt_object, e_set);
                 ObjectTable.put(JavaObjectId, mapentry);
-                if (crdt_object == null) {
-                    System.out.println("object is null");
-                }
-                if (crdt_object.key == null) {
-                    System.out.println("key is null");
-                }
                 KeyTable.put(crdt_object.key, JavaObjectId);
             } catch (ClassCastException e) {
                 // We don't have the object and we have been given an update
