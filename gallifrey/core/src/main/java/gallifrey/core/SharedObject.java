@@ -2,6 +2,7 @@ package gallifrey.core;
 
 import eu.antidotedb.client.GenericKey;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.protobuf.ByteString;
@@ -16,7 +17,6 @@ public class SharedObject implements Serializable {
     private static final long serialVersionUID = 17L;
     private static Frontend frontend;
     private static RMIInterface rmiBackend;
-    String str;
     public GenericKey key;
 
     private static Frontend getFrontend() {
@@ -67,7 +67,6 @@ public class SharedObject implements Serializable {
     public SharedObject(Object SharedObject) {
         CRDT crdt = new CRDT(SharedObject);
         this.key = crdt.key;
-        this.str = "hello";
 
         // Tell antidote about this new shared object
         getFrontend().static_send(key, crdt);
@@ -111,24 +110,7 @@ public class SharedObject implements Serializable {
     // (Object) s.const_call("doSomethingSideEffectFree");
     public Object const_call(String FunctionName) {
         // Flushes any waithing operations to the backend
-        getFrontend().static_read(key);
-        GenericFunction func = new GenericFunction(FunctionName);
-        try {
-            return getBackend().rmiOperation(this.key, func);
-        } catch (BackendRequiresFlushException b) {
-            getFrontend().static_read(b.key);
-            try {
-                return getBackend().rmiOperation(this.key, func, b.time);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                System.exit(99);
-                return null;
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            System.exit(22);
-            return null;
-        }
+        return const_call(FunctionName, new ArrayList<Object>());
     }
 
     // c.doSomethingSideEffectFree(arg1, arg2, ...);
