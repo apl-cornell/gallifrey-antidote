@@ -78,3 +78,14 @@ If you get something like:
 ```eu.antidotedb.client.SocketSender$AntidoteSocketException: java.io.IOException: End of input while data expected```
 
 Then your antidote instance you are running is not a gallifrey instance or at some point the protocol buffers have been changed such that the protobuf-java jar isn't compatible with antidote's version.
+
+### Serialization Error(Null Pointer Exception)
+
+If you get a null pointer exception, especially if it is from the crdt_object. Check both that the object you are trying to use is ~actually~ serializable and that the class files for that object are available to the backend.
+
+### IllegalAccess Exception
+
+If you get something like:
+```java.lang.IllegalAccessException: Class gallifrey.core.CRDT can not access a member of class CRDTCLASS with modifiers "public final"```
+
+Then your crdt object is private and must be explicitly made public to access the corresponding public fields.

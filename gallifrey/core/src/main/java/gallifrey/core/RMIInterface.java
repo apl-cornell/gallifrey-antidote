@@ -7,6 +7,8 @@ import eu.antidotedb.client.GenericKey;
 
 public interface RMIInterface extends Remote {
 
-    public Object rmiOperation(GenericKey k, GenericFunction f) throws RemoteException;
+    public Object rmiOperation(GenericKey k, GenericFunction f) throws RemoteException, BackendRequiresFlushException;
+
+    public Object rmiOperation(GenericKey k, GenericFunction f, VectorClock v) throws RemoteException;
 
 }
