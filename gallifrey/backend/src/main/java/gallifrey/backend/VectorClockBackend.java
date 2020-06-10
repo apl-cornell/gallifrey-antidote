@@ -4,6 +4,7 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Random;
+import java.util.concurrent.locks.*;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangTuple;
@@ -34,28 +35,58 @@ public class VectorClockBackend extends AntidoteBackend {
     VectorClock LastDownstreamTime = new VectorClock();
     VectorClock LastUpdateTime = new VectorClock();
 
+    ReadWriteLock update_lock = new ReentrantReadWriteLock();
+    private interface AcquiredLock extends AutoCloseable{
+	@Override
+	public void close();
+    };
+    private class AcquireReadLock implements AcquiredLock {
+	final Lock locked;
+	AcquireReadLock() {
+	    locked = update_lock.readLock();
+	    locked.lock();
+	}
+	@Override
+	public void close(){
+	    locked.unlock();
+	}
+    }
+    private class AcquireWriteLock implements AcquiredLock {
+	final Lock locked;
+	AcquireWriteLock() {
+	    locked = update_lock.writeLock();
+	    locked.lock();
+	}
+	@Override
+	public void close(){
+	    locked.unlock();
+	}
+    }
+
     public VectorClockBackend(String NodeName, String MailBox, String cookie) throws RemoteException {
         super(NodeName, MailBox, cookie);
     }
 
     @Override
     public OtpErlangBinary value(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
-        CRDT crdt_object = ObjectTable.get(JavaObjectId).crdt;
-        if (crdt_object == null) {
-            throw new NoSuchObjectException();
-        }
-
-        // So we don't actually want to give antidote the object since it can be pretty
-        // big. Instead, we are just going to return true and if someone wants the
-        // actual object/some field/part of it they can use the rmiOperation method via
-        // SharedObject to get it
+	try (AcquiredLock locked = new AcquireReadLock()){
+	    CRDT crdt_object = ObjectTable.get(JavaObjectId).crdt;
+	    if (crdt_object == null) {
+		throw new NoSuchObjectException();
+	    }
+	    
+	    // So we don't actually want to give antidote the object since it can be pretty
+	    // big. Instead, we are just going to return true and if someone wants the
+	    // actual object/some field/part of it they can use the rmiOperation method via
+	    // SharedObject to get it
+	}
         return new OtpErlangBinary(true);
     }
 
     @Override
     public OtpErlangBinary update(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) throws NoSuchObjectException {
         if (!ObjectTable.containsKey(JavaObjectId)) {
-            try {
+            try (AcquiredLock locked = new AcquireWriteLock()) {
                 CRDTEffect crdt_effect = (CRDTEffect) binary.getObject();
                 CRDT crdt_object = crdt_effect.crdt;
                 LastUpdateTime.updateClock(crdt_effect.time);
@@ -75,16 +106,18 @@ public class VectorClockBackend extends AntidoteBackend {
                 // so we need to request the object from antidote and try again
                 assert (binary.getObject().getClass() == GenericEffect.class);
 
-                if (MisssingObjectTable.containsKey(JavaObjectId)) {
-                    GenericEffect updateEffect = (GenericEffect) binary.getObject();
-                    TreeSet<GenericEffect> e_set = MisssingObjectTable.get(JavaObjectId);
-                    e_set.add(updateEffect);
-                } else {
-                    throw new NoSuchObjectException();
-                }
-            }
+		try (AcquiredLock locked = new AcquireWriteLock()){
+		    if (MisssingObjectTable.containsKey(JavaObjectId)) {
+			GenericEffect updateEffect = (GenericEffect) binary.getObject();
+			TreeSet<GenericEffect> e_set = MisssingObjectTable.get(JavaObjectId);
+			e_set.add(updateEffect);
+		    } else {
+			throw new NoSuchObjectException();
+		    }
+		}
+	    }
         } else {
-            try {
+            try (AcquiredLock locked = new AcquireWriteLock()) {
                 GenericEffect updateEffect = (GenericEffect) binary.getObject();
                 LastUpdateTime.updateClock(updateEffect.time);
                 TreeSet<GenericEffect> sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
@@ -95,7 +128,9 @@ public class VectorClockBackend extends AntidoteBackend {
                 // updates so we got a redundant crdt object(something we already have)
                 assert (binary.getObject().getClass() == CRDTEffect.class);
                 CRDTEffect crdt_effect = (CRDTEffect) binary.getObject();
-                LastUpdateTime.updateClock(crdt_effect.time);
+		try (AcquiredLock locked = new AcquireWriteLock()){
+		    LastUpdateTime.updateClock(crdt_effect.time);
+		}
             }
         }
 
@@ -106,10 +141,12 @@ public class VectorClockBackend extends AntidoteBackend {
     public OtpErlangBinary downstream(OtpErlangBinary JavaObjectId, OtpErlangBinary binary, OtpErlangMap clock,
             OtpErlangMap global_clock) {
         VectorClock effectClock = new VectorClock(clock);
-        GlobalClockTime = new VectorClock(global_clock);
-
-        LastDownstreamJavaId = JavaObjectId;
-        LastDownstreamTime.updateClock(effectClock);
+	try (AcquiredLock locked = new AcquireWriteLock()){
+	    GlobalClockTime = new VectorClock(global_clock);
+	    
+	    LastDownstreamJavaId = JavaObjectId;
+	    LastDownstreamTime.updateClock(effectClock);
+	}
 
         OtpErlangBinary bin;
         try {
@@ -126,34 +163,43 @@ public class VectorClockBackend extends AntidoteBackend {
     @Override
     public OtpErlangTuple snapshot(OtpErlangBinary JavaObjectId) throws NoSuchObjectException {
         // assert that object is in table else request it
-        Snapshot mapentry = ObjectTable.get(JavaObjectId);
-        CRDT crdt_object = mapentry.crdt;
-        if (crdt_object == null) {
-            throw new NoSuchObjectException();
-        }
 
-        CRDT new_crdt_object = crdt_object.deepClone();
-
-        // Apply any effects that have passed the clock time to the new copy of the
-        // object
-        TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
-        TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
-        for (GenericEffect e : crdt_effect_buffer) {
-            // Use a correct compare based on types
-            if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
+	OtpErlangBinary newJavaId;
+	Snapshot new_snapshot;
+	CRDT new_crdt_object;
+	try (AcquiredLock locked = new AcquireReadLock()){
+	    Snapshot mapentry = ObjectTable.get(JavaObjectId);
+	    CRDT crdt_object = mapentry.crdt;
+	    if (crdt_object == null) {
+		throw new NoSuchObjectException();
+	    }
+	    
+	    new_crdt_object = crdt_object.deepClone();
+	    
+	    // Apply any effects that have passed the clock time to the new copy of the
+	    // object
+	    TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
+	    TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
+	    for (GenericEffect e : crdt_effect_buffer) {
+		// Use a correct compare based on types
+		if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
                     || this.GlobalClockTime.isEmpty()) {
-                new_crdt_object.invoke((GenericFunction) e.func);
-            } else {
-                // Because I can't do concurrent modicifations to the treeset, add to a new one
-                // and replace
-                new_crdt_effect_buffer.add(e);
-            }
-        }
+		    new_crdt_object.invoke((GenericFunction) e.func);
+		} else {
+		    // Because I can't do concurrent modicifations to the treeset, add to a new one
+		    // and replace
+		    new_crdt_effect_buffer.add(e);
+		}
+	    }
 
-        OtpErlangBinary newJavaId = newJavaObjectId();
-        Snapshot new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);
-        ObjectTable.put(newJavaId, new_snapshot);
-        KeyTable.put(new_crdt_object.key, newJavaId);
+	    newJavaId = newJavaObjectId();
+	    new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);
+	}
+
+	try (AcquiredLock locked = new AcquireWriteLock()){
+	    ObjectTable.put(newJavaId, new_snapshot);
+	    KeyTable.put(new_crdt_object.key, newJavaId);
+	}
 
         OtpErlangObject[] emptypayload = new OtpErlangObject[2];
         emptypayload[0] = newJavaId;
@@ -163,9 +209,14 @@ public class VectorClockBackend extends AntidoteBackend {
     }
 
     public Object doRmiOperation(GenericKey key, GenericFunction func) {
-        OtpErlangBinary JavaObjectId = KeyTable.get(key);
-        Snapshot mapentry = ObjectTable.get(JavaObjectId);
-        CRDT crdt_object = mapentry.crdt;
+	OtpErlangBinary JavaObjectId;
+	Snapshot mapentry;
+        CRDT crdt_object;
+	try (AcquiredLock locked = new AcquireReadLock()){
+	    JavaObjectId = KeyTable.get(key);
+	    mapentry = ObjectTable.get(JavaObjectId);
+	    crdt_object = mapentry.crdt;
+	}
 
         // Add effects to a throwaway object to get the value
         CRDT temp_crdt_object = crdt_object.deepClone();
@@ -180,15 +231,20 @@ public class VectorClockBackend extends AntidoteBackend {
     public Object rmiOperation(GenericKey key, GenericFunction func)
             throws RemoteException, BackendRequiresFlushException {
         VectorClock currentDownstreamTime = LastDownstreamTime;
-
-        if (LastUpdateTime.lessthan(currentDownstreamTime)) {
+	boolean sleep_decision = false;
+	try (AcquiredLock locked = new AcquireReadLock()){
+	    sleep_decision = LastUpdateTime.lessthan(currentDownstreamTime);
+	}
+        if (sleep_decision) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
-            if (LastUpdateTime.lessthan(currentDownstreamTime)) {
-                throw new BackendRequiresFlushException(KeyTable.getKey(LastDownstreamJavaId), LastDownstreamTime);
-            }
+	    try (AcquiredLock locked = new AcquireReadLock()){
+		if (LastUpdateTime.lessthan(currentDownstreamTime)) {
+		    throw new BackendRequiresFlushException(KeyTable.getKey(LastDownstreamJavaId), LastDownstreamTime);
+		}
+	    }
         }
 
         return doRmiOperation(key, func);
@@ -197,13 +253,20 @@ public class VectorClockBackend extends AntidoteBackend {
     @Override
     public Object rmiOperation(GenericKey key, GenericFunction func, VectorClock DownstreamTime)
             throws RemoteException {
-        while (LastUpdateTime.lessthan(DownstreamTime)) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-            }
-        }
-
+	boolean sleep_decision = false;
+	try (AcquiredLock locked = new AcquireReadLock()){
+	    sleep_decision = LastUpdateTime.lessthan(DownstreamTime);
+	}
+        while (sleep_decision) {
+	    try (AcquiredLock locked = new AcquireReadLock()){
+		sleep_decision = LastUpdateTime.lessthan(DownstreamTime);
+	    }
+	    try {
+		Thread.sleep(1000);
+	    } catch (InterruptedException e) {
+	    }
+	}
+	
         return doRmiOperation(key, func);
     }
 
@@ -217,12 +280,14 @@ public class VectorClockBackend extends AntidoteBackend {
     @Override
     public OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary) {
         Snapshot s = (Snapshot) binary.getObject();
-        if (s == null) {
-            MisssingObjectTable.put(JavaObjectId, new TreeSet<>());
-        } else {
-            ObjectTable.put(JavaObjectId, s);
-            KeyTable.put(s.crdt.key, JavaObjectId);
-        }
+	try (AcquiredLock locked = new AcquireWriteLock()){
+	    if (s == null) {
+		MisssingObjectTable.put(JavaObjectId, new TreeSet<>());
+	    } else {
+		ObjectTable.put(JavaObjectId, s);
+		KeyTable.put(s.crdt.key, JavaObjectId);
+	    }
+	}
         return JavaObjectId;
     }
 
