@@ -5,12 +5,12 @@ import java.io.Serializable;
 /**
  * Register
  */
-public class Register<T> implements Serializable{
+public class Register<T> implements Serializable {
     private static final long serialVersionUID = 13L;
     private T val;
 
     public final Class<?>[] value = new Class[] { };
-    public final Class<?>[] assign = {Object.class};
+    public final Class<?>[] assign = { Object.class };
 
     public Register(T val) {
         this.val = val;

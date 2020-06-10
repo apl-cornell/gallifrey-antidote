@@ -55,7 +55,7 @@ public class SnapshotSerializationTest {
             ArrayList<GenericEffect> effectSet1 = new ArrayList<GenericEffect>(obj.effectbuffer);
             ArrayList<GenericEffect> effectSet2 = new ArrayList<GenericEffect>(obj2.effectbuffer);
 
-            for (int i = 0; i < obj.effectbuffer.size(); i = i + 1){
+            for (int i = 0; i < obj.effectbuffer.size(); i = i + 1) {
                 GenericEffect effect1 = effectSet1.get(i);
                 GenericEffect effect2 = effectSet2.get(i);
 

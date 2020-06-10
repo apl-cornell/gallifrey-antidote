@@ -11,9 +11,8 @@ public class SharedMap<K, V> implements Serializable {
     private static final long serialVersionUID = 14L;
     private HashMap<K, V> map;
 
-
     public final Class<?>[] value = new Class[] { };
-    public final Class<?>[] put = new Class[] { Object.class, Object.class};
+    public final Class<?>[] put = new Class[] { Object.class, Object.class };
     public final Class<?>[] get = new Class[] { Object.class };
     public final Class<?>[] containsKey = new Class[] { Object.class };
 

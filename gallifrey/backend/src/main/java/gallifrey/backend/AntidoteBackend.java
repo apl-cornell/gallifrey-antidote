@@ -106,7 +106,8 @@ abstract class AntidoteBackend extends UnicastRemoteObject implements Runnable, 
     // not be equal to an crdt snapshot
     public abstract OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary);
 
-    public abstract Object rmiOperation(GenericKey k, GenericFunction f) throws RemoteException, BackendRequiresFlushException;
+    public abstract Object rmiOperation(GenericKey k, GenericFunction f)
+            throws RemoteException, BackendRequiresFlushException;
 
     public abstract Object rmiOperation(GenericKey k, GenericFunction f, VectorClock v) throws RemoteException;
 
@@ -143,8 +144,8 @@ abstract class AntidoteBackend extends UnicastRemoteObject implements Runnable, 
                     case downstream:
                         OtpErlangMap transaction_clock = (OtpErlangMap) payload.elementAt(3);
                         OtpErlangMap global_clock = (OtpErlangMap) payload.elementAt(4);
-                        myOtpMbox.send(last_pid,
-                                createBackendMessage(downstream(JavaObjectId, binary, transaction_clock, global_clock)));
+                        myOtpMbox.send(last_pid, createBackendMessage(
+                                downstream(JavaObjectId, binary, transaction_clock, global_clock)));
                         break;
 
                     case newjavaid:

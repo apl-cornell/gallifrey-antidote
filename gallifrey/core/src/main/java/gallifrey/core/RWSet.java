@@ -13,11 +13,10 @@ public class RWSet<T> implements Serializable {
     private Set<T> addset;
     private Set<T> removeset;
 
-
     public final Class<?>[] value = new Class[] { };
-    public final Class<?>[] add = {Object.class};
+    public final Class<?>[] add = { Object.class };
     public final Class<?>[] addSet = new Class[] { Set.class };
-    public final Class<?>[] remove = {Object.class};
+    public final Class<?>[] remove = { Object.class };
     public final Class<?>[] removeSet = new Class[] { Set.class };
 
     public RWSet(Class<T> cls) {

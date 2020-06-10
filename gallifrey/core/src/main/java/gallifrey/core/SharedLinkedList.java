@@ -7,9 +7,9 @@ public class SharedLinkedList<T> implements Serializable {
     public T data;
     public SharedObject next;
 
-    public final Class<?>[] getData = new Class[] {};
+    public final Class<?>[] getData = new Class[] { };
     public final Class<?>[] setData = new Class[] { Object.class };
-    public final Class<?>[] getNext = new Class[] {};
+    public final Class<?>[] getNext = new Class[] { };
     public final Class<?>[] setNext = new Class[] { SharedObject.class };
 
     public SharedLinkedList(T data) {

@@ -4,12 +4,22 @@
  * This is a general purpose Gradle build.
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
+plugins {
+  id "com.diffplug.gradle.spotless" version "4.3.0"
+}
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'com.diffplug.gradle.spotless'
 
     repositories {
         mavenCentral()
+    }
+
+    spotless {
+		java {
+            eclipse().configFile(rootProject.file('formatter-settings.xml'))
+		}
     }
 
     sourceSets {

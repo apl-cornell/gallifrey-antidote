@@ -17,7 +17,8 @@ public class BidirectionalMapSerializationTest {
         try {
             BidirectionalMap<GenericKey, OtpErlangBinary> obj = new BidirectionalMap<>();
 
-            byte[] bytes = { (byte) 204, (byte) 29, (byte) 207, (byte) 217, (byte) 204, (byte) 29, (byte) 207, (byte) 217, (byte) 204, (byte) 29 };
+            byte[] bytes = { (byte) 204, (byte) 29, (byte) 207, (byte) 217, (byte) 204, (byte) 29, (byte) 207,
+                    (byte) 217, (byte) 204, (byte) 29 };
 
             ByteString byte_key = ByteString.copyFrom(bytes);
             GenericKey key = Key.generic(byte_key);
@@ -33,7 +34,8 @@ public class BidirectionalMapSerializationTest {
 
             FileInputStream fin = new FileInputStream("file.txt");
             ObjectInputStream ois = new ObjectInputStream(fin);
-            BidirectionalMap<GenericKey, OtpErlangBinary> obj2 = (BidirectionalMap<GenericKey, OtpErlangBinary>) ois.readObject();
+            BidirectionalMap<GenericKey, OtpErlangBinary> obj2 = (BidirectionalMap<GenericKey, OtpErlangBinary>) ois
+                    .readObject();
 
             assertEquals(obj.getValue(key), obj2.getValue(key));
             assertEquals(obj.getKey(value), obj2.getKey(value));

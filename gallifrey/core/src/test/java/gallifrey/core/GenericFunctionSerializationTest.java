@@ -18,7 +18,6 @@ public class GenericFunctionSerializationTest {
             oos.close();
             fout.close();
 
-
             FileInputStream fin = new FileInputStream("file.txt");
             ObjectInputStream ois = new ObjectInputStream(fin);
             GenericFunction func2 = (GenericFunction) ois.readObject();
@@ -29,7 +28,7 @@ public class GenericFunctionSerializationTest {
             ois.close();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-            assert(false);
+            assert (false);
         }
     }
 }

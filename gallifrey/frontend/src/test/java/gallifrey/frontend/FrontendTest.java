@@ -16,7 +16,8 @@ import gallifrey.core.GenericFunction;
 
 public class FrontendTest {
     @Test
-    // Might be a silly test since the frontend can not get the value of the object anymore
+    // Might be a silly test since the frontend can not get the value of the object
+    // anymore
     // FrontendTesting
     public void test() {
         int port = 8087;

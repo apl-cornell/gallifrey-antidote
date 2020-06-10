@@ -55,6 +55,10 @@ clean: ## Has gradle clean it's build files
 	rm -r gallifrey/*/bin || true
 	rm gallifrey/*/file.txt || true
 
+.PHONY: format
+format: ## A modified version of the Redhat vscode java formatter
+	./gradlew spotlessApply
+
 .PHONY: fatjar
 fatjar: ## Make sure you build before you try to make the jar file
 	./fatjar.sh

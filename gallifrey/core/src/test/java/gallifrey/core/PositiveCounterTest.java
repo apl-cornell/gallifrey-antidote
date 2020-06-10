@@ -3,7 +3,6 @@ package gallifrey.core;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-
 public class PositiveCounterTest {
     @Test
     public void test() {

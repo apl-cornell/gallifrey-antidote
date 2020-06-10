@@ -11,10 +11,10 @@ public class Demo {
     public static void main(String[] args) {
         Map<String, Integer> map = new HashMap<String, Integer>();
         map.put("Test1", 1);
-        // SharedMap is the Map class but with class fields and renamed to not conflict with Map itself
+        // SharedMap is the Map class but with class fields and renamed to not conflict
+        // with Map itself
         SharedMap<String, Integer> shareableMap = new SharedMap<String, Integer>(map);
         SharedObject sharedMap = new SharedObject(shareableMap);
-
 
         List<Object> putArgs = new ArrayList<Object>();
         putArgs.add("Test2");
@@ -23,7 +23,7 @@ public class Demo {
 
         List<Object> key1 = new ArrayList<Object>();
         key1.add("Test1");
-        if ((Boolean) sharedMap.const_call("containsKey", key1)){
+        if ((Boolean) sharedMap.const_call("containsKey", key1)) {
             System.out.print("Expected 1 and we got: ");
             System.out.println(sharedMap.const_call("get", key1));
         } else {
