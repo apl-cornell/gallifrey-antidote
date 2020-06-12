@@ -3,7 +3,14 @@ package gallifrey.core;
 import java.io.*;
 import java.net.InetSocketAddress;
 
-import eu.antidotedb.client.*;
+import eu.antidotedb.client.AntidoteClient;
+import eu.antidotedb.client.AntidoteException;
+import eu.antidotedb.client.Bucket;
+import eu.antidotedb.client.GenericKey;
+import eu.antidotedb.client.NoTransaction;
+import eu.antidotedb.client.TransactionWithReads;
+import eu.antidotedb.client.UpdateOp;
+import eu.antidotedb.client.AntidoteTransaction;
 
 import com.google.protobuf.ByteString;
 
@@ -14,7 +21,6 @@ public class Frontend {
 
     AntidoteClient antidote;
     Bucket bucket;
-    GenericKey LastUpdatedKey;
 
     public Frontend(String hostname, int port, String bucket) {
         this.antidote = new AntidoteClient(new InetSocketAddress(hostname, port));
@@ -22,8 +28,6 @@ public class Frontend {
     }
 
     private static ByteString custom_serialization(Object obj) {
-        // import com.ericsson.otp.erlang.OtpErlangBinary;
-        // new OtpErlangBinary
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
             out.writeObject(obj);
             return ByteString.copyFrom(bos.toByteArray());
@@ -43,41 +47,63 @@ public class Frontend {
         }
     }
 
-    public void send(GenericKey k, GenericFunction f) {
-        LastUpdatedKey = k;
-        try (InteractiveTransaction tx = antidote.startTransaction()) {
-            bucket.update(tx, k.invoke(custom_serialization(f)));
-            tx.commitTransaction();
+    private NoTransaction getNoTx() {
+        NoTransaction tx;
+        while ((tx = antidote.noTransaction()) == null) {
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                // Cool man
+            }
+        }
+        return tx;
+    }
+
+    private void doUpdate(AntidoteTransaction tx, UpdateOp update) {
+        try {
+            bucket.update(tx, update);
+        } catch (AntidoteException e) {
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e1) {
+                // Cool man
+            }
+            doUpdate(tx, update);
+        }
+    }
+
+    private ByteString doRead(TransactionWithReads tx, GenericKey k) {
+        try {
+            ByteString s;
+            while ((s = bucket.read(tx, k)) == null) {
+                /* Try again */
+                /* Strangely this can return null */
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException e1) {
+                    // Cool man
+                }
+            }
+            return s;
+        } catch (AntidoteException e) {
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e1) {
+                // Cool man
+            }
+            return doRead(tx, k);
         }
     }
 
     public void static_send(GenericKey k, GenericFunction f) {
-        LastUpdatedKey = k;
-        bucket.update(antidote.noTransaction(), k.invoke(custom_serialization(f)));
-    }
-
-    public void send(GenericKey k, CRDT obj) {
-        LastUpdatedKey = k;
-        try (InteractiveTransaction tx = antidote.startTransaction()) {
-            bucket.update(tx, k.invoke(custom_serialization(obj)));
-            tx.commitTransaction();
-        }
+        doUpdate(getNoTx(), k.invoke(custom_serialization(f)));
     }
 
     public void static_send(GenericKey k, CRDT obj) {
-        LastUpdatedKey = k;
-        bucket.update(antidote.noTransaction(), k.invoke(custom_serialization(obj)));
-    }
-
-    public Object read(GenericKey k) {
-        try (InteractiveTransaction tx = antidote.startTransaction()) {
-            bucket.read(tx, LastUpdatedKey);
-            return custom_deserialization(bucket.read(tx, k));
-        }
+        doUpdate(getNoTx(), k.invoke(custom_serialization(obj)));
     }
 
     public Object static_read(GenericKey k) {
-        custom_deserialization(bucket.read(antidote.noTransaction(), LastUpdatedKey));
-        return custom_deserialization(bucket.read(antidote.noTransaction(), k));
+        return custom_deserialization(doRead(getNoTx(), k));
     }
 }
