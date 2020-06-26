@@ -211,12 +211,12 @@ public class VectorClockBackend extends AntidoteBackend {
             }
             for (MergeComparator key : strategy_order) {
                 ArrayList<GenericEffect> single_merge_strat = grouped_by_merge_strategy.get(key);
-                Comparator<GenericEffect> effect_comparator = new Comparator<GenericEffect>() {
+                Comparator<GenericEffect> effect_comparator = (key == null ? null : new Comparator<GenericEffect>() {
                     @Override
                     public int compare(GenericEffect l, GenericEffect r) {
                         return key.compare(l.func, r.func);
                     }
-                };
+                });
                 single_merge_strat.sort(effect_comparator);
                 for (GenericEffect e : single_merge_strat) {
                     new_crdt_object.invoke((GenericFunction) e.func);
