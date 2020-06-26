@@ -190,18 +190,18 @@ public class VectorClockBackend extends AntidoteBackend {
             // object
             TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
             TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
-            HashMap<MergeComparator, ArrayList<GenericEffect>> grouped_by_merge_strategy = new HashMap<>();
-            ArrayList<MergeComparator> strategy_order = new ArrayList<>();
+            ArrayList<ArrayList<GenericEffect>> grouped_by_merge_strategy = new ArrayList<>();
             {
+                ArrayList<GenericEffect> current_group = null;
                 for (GenericEffect e : crdt_effect_buffer) {
                     if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
                             || this.GlobalClockTime.isEmpty()) {
                         MergeComparator merge_strategy = e.get_merge_strategy();
-                        if (!grouped_by_merge_strategy.containsKey(merge_strategy)) {
-                            grouped_by_merge_strategy.put(merge_strategy, new ArrayList<GenericEffect>());
-                            strategy_order.add(merge_strategy);
+                        if (current_group == null || current_group.get(0).get_merge_strategy().equals(merge_strategy)) {
+                            grouped_by_merge_strategy.add(new ArrayList<GenericEffect>());
+                            current_group = grouped_by_merge_strategy.get(grouped_by_merge_strategy.size() - 1);
                         }
-                        grouped_by_merge_strategy.get(merge_strategy).add(e);
+                        current_group.add(e);
                     } else {
                         // Because I can't do concurrent modicifations to the treeset, add to a new one
                         // and replace
@@ -209,12 +209,22 @@ public class VectorClockBackend extends AntidoteBackend {
                     }
                 }
             }
-            for (MergeComparator key : strategy_order) {
-                ArrayList<GenericEffect> single_merge_strat = grouped_by_merge_strategy.get(key);
+            for (ArrayList<GenericEffect> single_merge_strat : grouped_by_merge_strategy) {
+                MergeComparator key = single_merge_strat.get(0).get_merge_strategy();
                 Comparator<GenericEffect> effect_comparator = (key == null ? null : new Comparator<GenericEffect>() {
                     @Override
                     public int compare(GenericEffect l, GenericEffect r) {
-                        return key.compare(l.func, r.func);
+                        if (l.time.lessthan(r.time))
+                            return -1;
+                        else if (r.time.lessthan(l.time))
+                            return 1;
+                        else {
+                            int user_option = key.compare(l.func, r.func);
+                            if (user_option == 0)
+                                return l.compareTo(r);
+                            else
+                                return user_option;
+                        }
                     }
                 });
                 single_merge_strat.sort(effect_comparator);
