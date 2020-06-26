@@ -11,4 +11,8 @@ public class GenericEffect extends Effect {
         super(time);
         this.func = func;
     }
+
+    public MergeComparator<GenericFunction> get_merge_strategy(){
+	return func.merge_strategy();
+    }
 }

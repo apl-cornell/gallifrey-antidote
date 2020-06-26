@@ -22,7 +22,7 @@ public class SnapshotSerializationTest {
             Counter testCounter = new Counter(0);
             CRDT crdt = new CRDT(testCounter);
 
-            GenericFunction func = new GenericFunction("dothings", 1);
+            GenericFunction func = new GenericFunction("dothings", null, 1);
 
             OtpErlangObject[] keys = new OtpErlangObject[1];
             OtpErlangObject[] name = new OtpErlangAtom[1];

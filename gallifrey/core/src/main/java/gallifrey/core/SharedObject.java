@@ -4,6 +4,7 @@ import eu.antidotedb.client.GenericKey;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 import com.google.protobuf.ByteString;
 
@@ -18,6 +19,7 @@ public class SharedObject implements Serializable {
     private static Frontend frontend;
     private static RMIInterface rmiBackend;
     public GenericKey key;
+    public MergeComparator<GenericFunction> merge_strategy;
 
     private static Frontend getFrontend() {
         if (frontend == null) {
@@ -87,12 +89,16 @@ public class SharedObject implements Serializable {
         getFrontend().static_send(key, crdt);
     }
 
+    public void change_merge_strategy(MergeComparator<GenericFunction> merge_strategy){
+	this.merge_strategy = merge_strategy;
+    }
+
     // c.func();
     // ->
     // s.void_call("func");
     public void void_call(String FunctionName) {
         // Restriction
-        GenericFunction func = new GenericFunction(FunctionName);
+        GenericFunction func = new GenericFunction(FunctionName,merge_strategy);
         getFrontend().static_send(key, func);
     }
 
@@ -101,7 +107,7 @@ public class SharedObject implements Serializable {
     // s.void_call("func", [arg1, arg2, ...]);
     public void void_call(String FunctionName, List<Object> Arguments) {
         // Restriction
-        GenericFunction func = new GenericFunction(FunctionName, Arguments);
+        GenericFunction func = new GenericFunction(FunctionName, merge_strategy, Arguments);
         getFrontend().static_send(key, func);
     }
 
@@ -119,7 +125,7 @@ public class SharedObject implements Serializable {
     public Object const_call(String FunctionName, List<Object> Arguments) {
         // Flushes any waithing operations to the backend
         getFrontend().static_read(key);
-        GenericFunction func = new GenericFunction(FunctionName, Arguments);
+        GenericFunction func = new GenericFunction(FunctionName, merge_strategy, Arguments);
         try {
             return getBackend().rmiOperation(this.key, func);
         } catch (BackendRequiresFlushException b) {

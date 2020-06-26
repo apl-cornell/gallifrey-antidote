@@ -186,17 +186,33 @@ public class VectorClockBackend extends AntidoteBackend {
             // object
             TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
             TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
-            for (GenericEffect e : crdt_effect_buffer) {
-                // Use a correct compare based on types
-                if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
-                        || this.GlobalClockTime.isEmpty()) {
-                    new_crdt_object.invoke((GenericFunction) e.func);
-                } else {
-                    // Because I can't do concurrent modicifations to the treeset, add to a new one
-                    // and replace
-                    new_crdt_effect_buffer.add(e);
-                }
-            }
+	    HashMap<MergeComparator<GenericEffect>,ArrayList<GenericEffect>> grouped_by_merge_strategy = new HashMap<>();
+	    ArrayList<MergeComparator<GenericEffect>> strategy_order = new ArrayList<>;
+	    {
+		for (GenericEffect e : crdt_effect_buffer){
+		    if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
+			|| this.GlobalClockTime.isEmpty()) {
+			String merge_strategy = e.get_merge_strategy();
+			if (!grouped_by_merge_strategy.containsKey(merge_strategy)) {
+			    grouped_by_merge_strategy.put(merge_strategy,new ArrayList<GenericEffect>());
+			    strategy_order.add(merge_strategy);
+			}
+			grouped_by_merge_strategy.get(merge_strategy).add(e);
+		    }
+		    else {
+			// Because I can't do concurrent modicifations to the treeset, add to a new one
+			// and replace
+			new_crdt_effect_buffer.add(e);
+		    }
+		}
+	    }
+	    for (MergeComparator<GenericEffect> key : strategy_order){
+		ArrayList<GenericEffect> single_merge_strat = grouped_by_merge_strategy.get(key);
+		single_merge_strat.sort(key);
+		for (GenericEffect e : single_merge_strat){
+		    new_crdt_object.invoke((GenericFunction) e.func);
+		}
+	    }
 
             newJavaId = newJavaObjectId();
             new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);

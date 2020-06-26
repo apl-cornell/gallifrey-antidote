@@ -19,7 +19,7 @@ public class BackendWithTesting extends Backend {
 
         OtpErlangBinary id = new OtpErlangBinary(objid);
         OtpErlangLong atom = new OtpErlangLong(status.ordinal());
-        GenericFunction func = new GenericFunction(functionName, argument);
+        GenericFunction func = new GenericFunction(functionName, null, argument);
         OtpErlangBinary bin = new OtpErlangBinary(func);
         System.out.println(bin);
 

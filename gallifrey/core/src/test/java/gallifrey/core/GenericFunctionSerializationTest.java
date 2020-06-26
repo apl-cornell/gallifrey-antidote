@@ -11,7 +11,7 @@ public class GenericFunctionSerializationTest {
     @Test
     public void test() {
         try {
-            GenericFunction func = new GenericFunction("dothings", 1);
+            GenericFunction func = new GenericFunction("dothings", null, 1);
             FileOutputStream fout = new FileOutputStream("file.txt");
             ObjectOutputStream oos = new ObjectOutputStream(fout);
             oos.writeObject(func);

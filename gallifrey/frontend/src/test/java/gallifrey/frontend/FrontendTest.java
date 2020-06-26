@@ -36,9 +36,9 @@ public class FrontendTest {
         CRDT crdt = new CRDT(counter);
         antidote.static_send(key, crdt);
         for (int i = 1; i <= 10; i++) {
-            GenericFunction func = new GenericFunction("increment", 2);
+            GenericFunction func = new GenericFunction("increment", null, 2);
             antidote.static_send(key, func);
-            GenericFunction func2 = new GenericFunction("decrement", 1);
+            GenericFunction func2 = new GenericFunction("decrement", null, 1);
             antidote.static_send(key, func2);
             antidote.static_read(key);
         }

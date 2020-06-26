@@ -19,7 +19,7 @@ public class GenericEffectSerializationTest {
     @Test
     public void test() {
         try {
-            GenericFunction func = new GenericFunction("dothings", 1);
+            GenericFunction func = new GenericFunction("dothings", null, 1);
             OtpErlangObject[] keys = new OtpErlangObject[1];
             OtpErlangObject[] name = new OtpErlangAtom[1];
             name[0] = new OtpErlangAtom("antidote@127.0.0.1");
