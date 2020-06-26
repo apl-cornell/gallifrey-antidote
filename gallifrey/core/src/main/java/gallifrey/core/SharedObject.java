@@ -19,7 +19,7 @@ public class SharedObject implements Serializable {
     private static Frontend frontend;
     private static RMIInterface rmiBackend;
     public GenericKey key;
-    public MergeComparator<GenericFunction> merge_strategy;
+    public MergeComparator merge_strategy;
 
     private static Frontend getFrontend() {
         if (frontend == null) {
@@ -89,7 +89,7 @@ public class SharedObject implements Serializable {
         getFrontend().static_send(key, crdt);
     }
 
-    public void change_merge_strategy(MergeComparator<GenericFunction> merge_strategy){
+    public void change_merge_strategy(MergeComparator merge_strategy){
 	this.merge_strategy = merge_strategy;
     }
 

@@ -1,5 +1,8 @@
 package gallifrey.backend;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeSet;
@@ -23,6 +26,7 @@ import gallifrey.core.BackendRequiresFlushException;
 import gallifrey.core.CRDT;
 import gallifrey.core.VectorClock;
 import gallifrey.core.GenericFunction;
+import gallifrey.core.MergeComparator;
 
 public class VectorClockBackend extends AntidoteBackend {
     private static final long serialVersionUID = 16L;
@@ -186,13 +190,13 @@ public class VectorClockBackend extends AntidoteBackend {
             // object
             TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
             TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
-	    HashMap<MergeComparator<GenericEffect>,ArrayList<GenericEffect>> grouped_by_merge_strategy = new HashMap<>();
-	    ArrayList<MergeComparator<GenericEffect>> strategy_order = new ArrayList<>;
+	    HashMap<MergeComparator,ArrayList<GenericEffect>> grouped_by_merge_strategy = new HashMap<>();
+	    ArrayList<MergeComparator> strategy_order = new ArrayList<>();
 	    {
 		for (GenericEffect e : crdt_effect_buffer){
 		    if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
 			|| this.GlobalClockTime.isEmpty()) {
-			String merge_strategy = e.get_merge_strategy();
+			MergeComparator merge_strategy = e.get_merge_strategy();
 			if (!grouped_by_merge_strategy.containsKey(merge_strategy)) {
 			    grouped_by_merge_strategy.put(merge_strategy,new ArrayList<GenericEffect>());
 			    strategy_order.add(merge_strategy);
@@ -206,9 +210,15 @@ public class VectorClockBackend extends AntidoteBackend {
 		    }
 		}
 	    }
-	    for (MergeComparator<GenericEffect> key : strategy_order){
+	    for (MergeComparator key : strategy_order){
 		ArrayList<GenericEffect> single_merge_strat = grouped_by_merge_strategy.get(key);
-		single_merge_strat.sort(key);
+		Comparator<GenericEffect> effect_comparator = new Comparator<GenericEffect>() {
+			@Override
+			public int compare(GenericEffect l, GenericEffect r) {
+				return key.compare(l.func, r.func);
+			}
+		};
+		single_merge_strat.sort(effect_comparator);
 		for (GenericEffect e : single_merge_strat){
 		    new_crdt_object.invoke((GenericFunction) e.func);
 		}
