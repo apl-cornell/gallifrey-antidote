@@ -9,10 +9,11 @@ import java.util.HashSet;
 
 public class RegisterTest {
     @Test
+    @SuppressWarnings("unchecked")
     public void test() {
         Register<String> testRegister1 = new Register<String>("hello");
         CRDT crdt = new CRDT(testRegister1);
-        GenericFunction readfunc = new GenericFunction("value",null);
+        GenericFunction readfunc = new GenericFunction("value", null);
         assertEquals("hello", (String) crdt.invoke(readfunc));
         GenericFunction func1 = new GenericFunction("assign", null, "goodbye");
         crdt.invoke(func1);

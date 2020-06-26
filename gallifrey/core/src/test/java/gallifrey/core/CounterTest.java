@@ -8,7 +8,7 @@ public class CounterTest {
     public void test() {
         Counter testCounter = new Counter(0);
         CRDT crdt = new CRDT(testCounter);
-        GenericFunction readfunc = new GenericFunction("value",null);
+        GenericFunction readfunc = new GenericFunction("value", null);
         assertEquals(0, (int) crdt.invoke(readfunc));
         GenericFunction func1 = new GenericFunction("increment", null, 2);
         crdt.invoke(func1);

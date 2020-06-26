@@ -13,6 +13,8 @@ import gallifrey.core.SharedObject;
 
 public class SharedObjectMapTest {
     @Test
+    @SuppressWarnings("unchecked")
+
     public void test() {
         SharedMap<String, Integer> map = new SharedMap<String, Integer>(10);
         SharedObject obj = new SharedObject(map);

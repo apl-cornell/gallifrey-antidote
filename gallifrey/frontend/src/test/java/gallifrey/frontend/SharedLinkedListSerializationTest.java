@@ -10,6 +10,8 @@ import gallifrey.core.SharedLinkedList;
 
 public class SharedLinkedListSerializationTest {
     @Test
+    @SuppressWarnings("unchecked")
+
     public void test() {
         try {
             SharedLinkedList<String> obj = new SharedLinkedList<String>("bye");

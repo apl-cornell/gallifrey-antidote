@@ -10,11 +10,12 @@ import java.util.HashMap;
 
 public class GrowthMapTest {
     @Test
+    @SuppressWarnings("unchecked")
     public void test() {
         GrowthMap<String, Integer> testMap = new GrowthMap<String, Integer>();
         CRDT crdt = new CRDT(testMap);
         Map<String, Integer> expectedMap = new HashMap<String, Integer>();
-        GenericFunction readfunc = new GenericFunction("value",null);
+        GenericFunction readfunc = new GenericFunction("value", null);
         assertEquals(expectedMap, (Map<String, Integer>) crdt.invoke(readfunc));
 
         List<Object> args1 = new ArrayList<Object>();

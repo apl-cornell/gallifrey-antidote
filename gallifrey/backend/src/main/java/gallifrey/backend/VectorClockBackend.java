@@ -190,39 +190,38 @@ public class VectorClockBackend extends AntidoteBackend {
             // object
             TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
             TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
-	    HashMap<MergeComparator,ArrayList<GenericEffect>> grouped_by_merge_strategy = new HashMap<>();
-	    ArrayList<MergeComparator> strategy_order = new ArrayList<>();
-	    {
-		for (GenericEffect e : crdt_effect_buffer){
-		    if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
-			|| this.GlobalClockTime.isEmpty()) {
-			MergeComparator merge_strategy = e.get_merge_strategy();
-			if (!grouped_by_merge_strategy.containsKey(merge_strategy)) {
-			    grouped_by_merge_strategy.put(merge_strategy,new ArrayList<GenericEffect>());
-			    strategy_order.add(merge_strategy);
-			}
-			grouped_by_merge_strategy.get(merge_strategy).add(e);
-		    }
-		    else {
-			// Because I can't do concurrent modicifations to the treeset, add to a new one
-			// and replace
-			new_crdt_effect_buffer.add(e);
-		    }
-		}
-	    }
-	    for (MergeComparator key : strategy_order){
-		ArrayList<GenericEffect> single_merge_strat = grouped_by_merge_strategy.get(key);
-		Comparator<GenericEffect> effect_comparator = new Comparator<GenericEffect>() {
-			@Override
-			public int compare(GenericEffect l, GenericEffect r) {
-				return key.compare(l.func, r.func);
-			}
-		};
-		single_merge_strat.sort(effect_comparator);
-		for (GenericEffect e : single_merge_strat){
-		    new_crdt_object.invoke((GenericFunction) e.func);
-		}
-	    }
+            HashMap<MergeComparator, ArrayList<GenericEffect>> grouped_by_merge_strategy = new HashMap<>();
+            ArrayList<MergeComparator> strategy_order = new ArrayList<>();
+            {
+                for (GenericEffect e : crdt_effect_buffer) {
+                    if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
+                            || this.GlobalClockTime.isEmpty()) {
+                        MergeComparator merge_strategy = e.get_merge_strategy();
+                        if (!grouped_by_merge_strategy.containsKey(merge_strategy)) {
+                            grouped_by_merge_strategy.put(merge_strategy, new ArrayList<GenericEffect>());
+                            strategy_order.add(merge_strategy);
+                        }
+                        grouped_by_merge_strategy.get(merge_strategy).add(e);
+                    } else {
+                        // Because I can't do concurrent modicifations to the treeset, add to a new one
+                        // and replace
+                        new_crdt_effect_buffer.add(e);
+                    }
+                }
+            }
+            for (MergeComparator key : strategy_order) {
+                ArrayList<GenericEffect> single_merge_strat = grouped_by_merge_strategy.get(key);
+                Comparator<GenericEffect> effect_comparator = new Comparator<GenericEffect>() {
+                    @Override
+                    public int compare(GenericEffect l, GenericEffect r) {
+                        return key.compare(l.func, r.func);
+                    }
+                };
+                single_merge_strat.sort(effect_comparator);
+                for (GenericEffect e : single_merge_strat) {
+                    new_crdt_object.invoke((GenericFunction) e.func);
+                }
+            }
 
             newJavaId = newJavaObjectId();
             new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);

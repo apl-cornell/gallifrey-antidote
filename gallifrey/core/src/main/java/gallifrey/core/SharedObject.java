@@ -4,7 +4,6 @@ import eu.antidotedb.client.GenericKey;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Comparator;
 
 import com.google.protobuf.ByteString;
 
@@ -89,8 +88,8 @@ public class SharedObject implements Serializable {
         getFrontend().static_send(key, crdt);
     }
 
-    public void change_merge_strategy(MergeComparator merge_strategy){
-	this.merge_strategy = merge_strategy;
+    public void change_merge_strategy(MergeComparator merge_strategy) {
+        this.merge_strategy = merge_strategy;
     }
 
     // c.func();
@@ -98,7 +97,7 @@ public class SharedObject implements Serializable {
     // s.void_call("func");
     public void void_call(String FunctionName) {
         // Restriction
-        GenericFunction func = new GenericFunction(FunctionName,merge_strategy);
+        GenericFunction func = new GenericFunction(FunctionName, merge_strategy);
         getFrontend().static_send(key, func);
     }
 

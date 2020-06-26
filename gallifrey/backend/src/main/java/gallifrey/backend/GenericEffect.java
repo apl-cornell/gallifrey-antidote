@@ -13,7 +13,7 @@ public class GenericEffect extends Effect {
         this.func = func;
     }
 
-    public MergeComparator get_merge_strategy(){
-	return func.merge_strategy;
+    public MergeComparator get_merge_strategy() {
+        return func.merge_strategy;
     }
 }
