@@ -18,7 +18,7 @@ buildbackend: buildcore
 	./gradlew :gallifrey:backend:build
 
 .PHONY: build
-build: buildbackend buildfrontend ## Build the project
+build: format buildbackend buildfrontend ## Build the project
 
 .PHONY: backend
 backend: buildbackend  ## Creates a running backend instance that Antidote can connect to
