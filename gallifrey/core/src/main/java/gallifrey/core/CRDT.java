@@ -18,7 +18,7 @@ import java.util.Random;
 
 import com.google.protobuf.ByteString;
 
-public class CRDT implements Antidote_interface {
+public class CRDT implements AntidoteInterface {
     /*
      * Make sure objects are able to use serializable(serialVersionUID) Class fields
      * that specify the types of arguments Class fields don't conflict with other

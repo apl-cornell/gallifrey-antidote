@@ -1,17 +1,12 @@
 package gallifrey.backend;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Random;
 import java.util.concurrent.locks.*;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangTuple;
-
 import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangMap;
 
@@ -26,12 +21,11 @@ import gallifrey.core.BackendRequiresFlushException;
 import gallifrey.core.CRDT;
 import gallifrey.core.VectorClock;
 import gallifrey.core.GenericFunction;
-import gallifrey.core.MergeComparator;
 
 public class VectorClockBackend extends AntidoteBackend {
     private static final long serialVersionUID = 16L;
     Map<OtpErlangBinary, Snapshot> ObjectTable = new Hashtable<>();
-    Map<OtpErlangBinary, TreeSet<GenericEffect>> MisssingObjectTable = new Hashtable<>();
+    Map<OtpErlangBinary, MergeSortedSet> MisssingObjectTable = new Hashtable<>();
     BidirectionalMap<GenericKey, OtpErlangBinary> KeyTable = new BidirectionalMap<>();
 
     VectorClock GlobalClockTime = new VectorClock();
@@ -101,7 +95,7 @@ public class VectorClockBackend extends AntidoteBackend {
                 CRDT crdt_object = crdt_effect.crdt;
                 LastUpdateTime.updateClock(crdt_effect.time);
 
-                TreeSet<GenericEffect> e_set = new TreeSet<GenericEffect>();
+                MergeSortedSet e_set = new MergeSortedSet();
 
                 if (MisssingObjectTable.containsKey(JavaObjectId)) {
                     e_set = MisssingObjectTable.get(JavaObjectId);
@@ -119,7 +113,7 @@ public class VectorClockBackend extends AntidoteBackend {
                 try (AcquiredLock locked = new AcquireWriteLock()) {
                     if (MisssingObjectTable.containsKey(JavaObjectId)) {
                         GenericEffect updateEffect = (GenericEffect) binary.getObject();
-                        TreeSet<GenericEffect> e_set = MisssingObjectTable.get(JavaObjectId);
+                        MergeSortedSet e_set = MisssingObjectTable.get(JavaObjectId);
                         e_set.add(updateEffect);
                     } else {
                         throw new NoSuchObjectException();
@@ -130,7 +124,7 @@ public class VectorClockBackend extends AntidoteBackend {
             try (AcquiredLock locked = new AcquireWriteLock()) {
                 GenericEffect updateEffect = (GenericEffect) binary.getObject();
                 LastUpdateTime.updateClock(updateEffect.time);
-                TreeSet<GenericEffect> sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
+                MergeSortedSet sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
                 sortedEffectSet.add(updateEffect);
             } catch (ClassCastException e) {
                 /* intentionally ignore this exception */
@@ -188,48 +182,18 @@ public class VectorClockBackend extends AntidoteBackend {
 
             // Apply any effects that have passed the clock time to the new copy of the
             // object
-            TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
-            TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
-            ArrayList<ArrayList<GenericEffect>> grouped_by_merge_strategy = new ArrayList<>();
-            {
-                ArrayList<GenericEffect> current_group = null;
-                for (GenericEffect e : crdt_effect_buffer) {
-                    if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
-                            || this.GlobalClockTime.isEmpty()) {
-                        MergeComparator merge_strategy = e.get_merge_strategy();
-                        if (current_group == null || current_group.get(0).get_merge_strategy().equals(merge_strategy)) {
-                            grouped_by_merge_strategy.add(new ArrayList<GenericEffect>());
-                            current_group = grouped_by_merge_strategy.get(grouped_by_merge_strategy.size() - 1);
-                        }
-                        current_group.add(e);
-                    } else {
-                        // Because I can't do concurrent modicifations to the treeset, add to a new one
-                        // and replace
-                        new_crdt_effect_buffer.add(e);
-                    }
-                }
-            }
-            for (ArrayList<GenericEffect> single_merge_strat : grouped_by_merge_strategy) {
-                MergeComparator key = single_merge_strat.get(0).get_merge_strategy();
-                Comparator<GenericEffect> effect_comparator = (key == null ? null : new Comparator<GenericEffect>() {
-                    @Override
-                    public int compare(GenericEffect l, GenericEffect r) {
-                        if (l.time.lessthan(r.time))
-                            return -1;
-                        else if (r.time.lessthan(l.time))
-                            return 1;
-                        else {
-                            int user_option = key.compare(l.func, r.func);
-                            if (user_option == 0)
-                                return l.compareTo(r);
-                            else
-                                return user_option;
-                        }
-                    }
-                });
-                single_merge_strat.sort(effect_comparator);
-                for (GenericEffect e : single_merge_strat) {
+            MergeSortedSet crdt_effect_buffer = mapentry.effectbuffer;
+            MergeSortedSet new_crdt_effect_buffer = new MergeSortedSet();
+
+            for (GenericEffect e : crdt_effect_buffer) {
+                // Use a correct compare based on types
+                if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
+                        || this.GlobalClockTime.isEmpty()) {
                     new_crdt_object.invoke((GenericFunction) e.func);
+                } else {
+                    // Because I can't do concurrent modicifations to the treeset, add to a new one
+                    // and replace
+                    new_crdt_effect_buffer.add(e);
                 }
             }
 
@@ -323,7 +287,7 @@ public class VectorClockBackend extends AntidoteBackend {
         Snapshot s = (Snapshot) binary.getObject();
         try (AcquiredLock locked = new AcquireWriteLock()) {
             if (s == null) {
-                MisssingObjectTable.put(JavaObjectId, new TreeSet<>());
+                MisssingObjectTable.put(JavaObjectId, new MergeSortedSet());
             } else {
                 ObjectTable.put(JavaObjectId, s);
                 KeyTable.put(s.crdt.key, JavaObjectId);
