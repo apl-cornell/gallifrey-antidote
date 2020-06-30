@@ -5,7 +5,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangLong;
@@ -34,7 +33,7 @@ public class SnapshotSerializationTest {
             OtpErlangMap map = new OtpErlangMap(keys, values);
             VectorClock time = new VectorClock(map);
             GenericEffect eff = new GenericEffect(func, time);
-            TreeSet<GenericEffect> sortedEffectSet = new TreeSet<GenericEffect>();
+            MergeSortedSet sortedEffectSet = new MergeSortedSet();
             sortedEffectSet.add(eff);
             Snapshot obj = new Snapshot(crdt, sortedEffectSet);
             FileOutputStream fout = new FileOutputStream("file.txt");
@@ -52,8 +51,8 @@ public class SnapshotSerializationTest {
 
             assertEquals(obj.effectbuffer.size(), obj2.effectbuffer.size());
 
-            ArrayList<GenericEffect> effectSet1 = new ArrayList<GenericEffect>(obj.effectbuffer);
-            ArrayList<GenericEffect> effectSet2 = new ArrayList<GenericEffect>(obj2.effectbuffer);
+            ArrayList<GenericEffect> effectSet1 = obj.effectbuffer.toArrayList();
+            ArrayList<GenericEffect> effectSet2 = obj2.effectbuffer.toArrayList();
 
             for (int i = 0; i < obj.effectbuffer.size(); i = i + 1) {
                 GenericEffect effect1 = effectSet1.get(i);
