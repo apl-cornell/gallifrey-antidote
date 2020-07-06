@@ -142,4 +142,8 @@ public class SharedObject implements Serializable {
             return null;
         }
     }
+
+    public SharedObject transition(String name) {
+        return this;
+    }
 }
