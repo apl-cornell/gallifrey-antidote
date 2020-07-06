@@ -34,6 +34,7 @@ public class BidirectionalMapSerializationTest {
 
             FileInputStream fin = new FileInputStream("file.txt");
             ObjectInputStream ois = new ObjectInputStream(fin);
+            @SuppressWarnings("unchecked")
             BidirectionalMap<GenericKey, OtpErlangBinary> obj2 = (BidirectionalMap<GenericKey, OtpErlangBinary>) ois
                     .readObject();
 

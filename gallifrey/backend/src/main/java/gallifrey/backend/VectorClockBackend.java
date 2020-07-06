@@ -2,13 +2,11 @@ package gallifrey.backend;
 
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.Random;
 import java.util.concurrent.locks.*;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
 import com.ericsson.otp.erlang.OtpErlangTuple;
-
 import com.ericsson.otp.erlang.OtpErlangObject;
 import com.ericsson.otp.erlang.OtpErlangMap;
 
@@ -27,7 +25,7 @@ import gallifrey.core.GenericFunction;
 public class VectorClockBackend extends AntidoteBackend {
     private static final long serialVersionUID = 16L;
     Map<OtpErlangBinary, Snapshot> ObjectTable = new Hashtable<>();
-    Map<OtpErlangBinary, TreeSet<GenericEffect>> MisssingObjectTable = new Hashtable<>();
+    Map<OtpErlangBinary, MergeSortedSet> MisssingObjectTable = new Hashtable<>();
     BidirectionalMap<GenericKey, OtpErlangBinary> KeyTable = new BidirectionalMap<>();
 
     VectorClock GlobalClockTime = new VectorClock();
@@ -97,7 +95,7 @@ public class VectorClockBackend extends AntidoteBackend {
                 CRDT crdt_object = crdt_effect.crdt;
                 LastUpdateTime.updateClock(crdt_effect.time);
 
-                TreeSet<GenericEffect> e_set = new TreeSet<GenericEffect>();
+                MergeSortedSet e_set = new MergeSortedSet();
 
                 if (MisssingObjectTable.containsKey(JavaObjectId)) {
                     e_set = MisssingObjectTable.get(JavaObjectId);
@@ -115,7 +113,7 @@ public class VectorClockBackend extends AntidoteBackend {
                 try (AcquiredLock locked = new AcquireWriteLock()) {
                     if (MisssingObjectTable.containsKey(JavaObjectId)) {
                         GenericEffect updateEffect = (GenericEffect) binary.getObject();
-                        TreeSet<GenericEffect> e_set = MisssingObjectTable.get(JavaObjectId);
+                        MergeSortedSet e_set = MisssingObjectTable.get(JavaObjectId);
                         e_set.add(updateEffect);
                     } else {
                         throw new NoSuchObjectException();
@@ -126,7 +124,7 @@ public class VectorClockBackend extends AntidoteBackend {
             try (AcquiredLock locked = new AcquireWriteLock()) {
                 GenericEffect updateEffect = (GenericEffect) binary.getObject();
                 LastUpdateTime.updateClock(updateEffect.time);
-                TreeSet<GenericEffect> sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
+                MergeSortedSet sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
                 sortedEffectSet.add(updateEffect);
             } catch (ClassCastException e) {
                 /* intentionally ignore this exception */
@@ -184,8 +182,9 @@ public class VectorClockBackend extends AntidoteBackend {
 
             // Apply any effects that have passed the clock time to the new copy of the
             // object
-            TreeSet<GenericEffect> crdt_effect_buffer = mapentry.effectbuffer;
-            TreeSet<GenericEffect> new_crdt_effect_buffer = new TreeSet<GenericEffect>();
+            MergeSortedSet crdt_effect_buffer = mapentry.effectbuffer;
+            MergeSortedSet new_crdt_effect_buffer = new MergeSortedSet();
+
             for (GenericEffect e : crdt_effect_buffer) {
                 // Use a correct compare based on types
                 if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
@@ -288,7 +287,7 @@ public class VectorClockBackend extends AntidoteBackend {
         Snapshot s = (Snapshot) binary.getObject();
         try (AcquiredLock locked = new AcquireWriteLock()) {
             if (s == null) {
-                MisssingObjectTable.put(JavaObjectId, new TreeSet<>());
+                MisssingObjectTable.put(JavaObjectId, new MergeSortedSet());
             } else {
                 ObjectTable.put(JavaObjectId, s);
                 KeyTable.put(s.crdt.key, JavaObjectId);

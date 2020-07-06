@@ -53,8 +53,9 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
     }
 
     public boolean lessthan(VectorClock c) {
-        if (c.vectorclock.keySet().isEmpty() && this.vectorclock.keySet().isEmpty())
+        if (c.vectorclock.keySet().isEmpty() && this.vectorclock.keySet().isEmpty()) {
             return false;
+        }
         for (String key : c.vectorclock.keySet()) {
             if (this.get(key).compareTo(c.get(key)) != -1) { // greater than or equal to
                 return false;
@@ -69,10 +70,12 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
 
     @Override
     public int compareTo(VectorClock c) {
-        if (this.lessthan(c))
+        if (this.lessthan(c)) {
             return -1;
-        if (c.lessthan(this))
+        }
+        if (c.lessthan(this)) {
             return 1; // greater than
+        }
         // Some kind of concurrent clock so use ordered keys to provide a total ordering
         Set<String> allkeys = new TreeSet<String>();
         allkeys.addAll(this.vectorclock.keySet());
@@ -80,8 +83,9 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         // Try and find a key that is not equal in both clocks and use that to order
         for (String key : allkeys) {
             int comparison = this.get(key).compareTo(c.get(key));
-            if (comparison != 0)
+            if (comparison != 0) {
                 return comparison;
+            }
         }
         return 0;
     }

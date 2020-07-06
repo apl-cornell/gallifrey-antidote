@@ -9,12 +9,13 @@ import java.util.HashSet;
 
 public class RegisterTest {
     @Test
+    @SuppressWarnings("unchecked")
     public void test() {
         Register<String> testRegister1 = new Register<String>("hello");
         CRDT crdt = new CRDT(testRegister1);
-        GenericFunction readfunc = new GenericFunction("value");
+        GenericFunction readfunc = new GenericFunction("value", null);
         assertEquals("hello", (String) crdt.invoke(readfunc));
-        GenericFunction func1 = new GenericFunction("assign", "goodbye");
+        GenericFunction func1 = new GenericFunction("assign", null, "goodbye");
         crdt.invoke(func1);
         assertEquals("goodbye", (String) crdt.invoke(readfunc));
 
@@ -26,7 +27,7 @@ public class RegisterTest {
         CRDT crdt2 = new CRDT(testRegister2);
         assertEquals(testSet, (HashSet<Integer>) crdt2.invoke(readfunc));
         testSet.add(42);
-        GenericFunction func2 = new GenericFunction("assign", testSet);
+        GenericFunction func2 = new GenericFunction("assign", null, testSet);
         crdt2.invoke(func2);
         assertEquals(testSet, (HashSet<Integer>) crdt2.invoke(readfunc));
     }

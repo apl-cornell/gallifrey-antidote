@@ -37,6 +37,8 @@ To start antidote instance: ```make shell```
 
 To start gallifrey backend: ```make backend```
 
+Remember to set the EXTERNAL_CLASSES environment variable before running ```make backend```
+
 To run example frontend code: ```make frontend```
 
 To connect to antidote shells:
