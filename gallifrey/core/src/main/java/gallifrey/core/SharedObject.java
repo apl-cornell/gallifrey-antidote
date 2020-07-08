@@ -143,7 +143,15 @@ public class SharedObject implements Serializable {
         }
     }
 
+    public MatchLocked get_current_restriction_lock(String current_name) {
+        return new MatchLocked(current_name, this);
+    }
+
     public SharedObject transition(String name) {
         return this;
+    }
+
+    public void release_current_retriction_lock(MatchLocked ml) {
+
     }
 }
