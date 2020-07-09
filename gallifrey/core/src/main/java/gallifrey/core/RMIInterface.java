@@ -20,5 +20,9 @@ public interface RMIInterface extends Remote {
 
     public void readUnlockRestriction(GenericKey k);
 
+    public void writeLockRestriction(GenericKey k);
+
+    public void writeUnlockRestriction(GenericKey k);
+
     public void setBlockUntilTime(GenericKey k, VectorClock block_time, String new_restriction);
 }

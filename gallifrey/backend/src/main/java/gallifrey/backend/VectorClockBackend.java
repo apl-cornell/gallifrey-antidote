@@ -325,6 +325,16 @@ public class VectorClockBackend extends AntidoteBackend {
     }
 
     @Override
+    public void writeLockRestriction(GenericKey k) {
+        RestrictionManager.writeLockRestriction(k);
+    }
+
+    @Override
+    public void writeUnlockRestriction(GenericKey k) {
+        RestrictionManager.writeUnlockRestriction(k);
+    }
+
+    @Override
     public void setBlockUntilTime(GenericKey k, VectorClock block_time, String new_restriction) {
         RestrictionManager.setBlockUntilTime(k, block_time, new_restriction, LastUpdateTime);
     }
