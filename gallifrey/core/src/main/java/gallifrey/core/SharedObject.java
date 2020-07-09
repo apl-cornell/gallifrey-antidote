@@ -148,10 +148,11 @@ public class SharedObject implements Serializable {
     }
 
     public SharedObject transition(String name) {
+        // TODO
         return this;
     }
 
     public void release_current_restriction_lock(MatchLocked ml) {
-
+        // TODO
     }
 }
