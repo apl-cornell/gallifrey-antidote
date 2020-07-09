@@ -46,6 +46,11 @@ public class BackendRestrictionManager {
         map.get(k).rwl.writeLock().lock();
     }
 
+    void writeUnlockRestriction(GenericKey k) {
+        assert (map.containsKey(k));
+        map.get(k).rwl.writeLock().unlock();
+    }
+
     // centraldude -> vectorClockBackend -> setBlockUntilTime
     // vectorClockBackend.setBlockUntilTime(VectorClock block_time, String
     // new_restriction);
