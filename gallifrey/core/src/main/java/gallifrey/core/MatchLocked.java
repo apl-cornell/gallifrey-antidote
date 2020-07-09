@@ -10,7 +10,7 @@ public class MatchLocked implements AutoCloseable {
 
     @Override
     public void close() {
-        locked_object.release_current_retriction_lock(this);
+        locked_object.release_current_restriction_lock(this);
     }
 
     public MatchLocked(final String current_restriction, final SharedObject locked_object) {
