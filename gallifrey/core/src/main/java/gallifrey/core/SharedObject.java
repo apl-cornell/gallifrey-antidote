@@ -151,7 +151,7 @@ public class SharedObject implements Serializable {
         return this;
     }
 
-    public void release_current_retriction_lock(MatchLocked ml) {
+    public void release_current_restriction_lock(MatchLocked ml) {
 
     }
 }
