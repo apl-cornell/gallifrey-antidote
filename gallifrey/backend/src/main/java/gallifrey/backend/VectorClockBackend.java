@@ -300,7 +300,7 @@ public class VectorClockBackend extends AntidoteBackend {
     }
 
     @Override
-    public VectorClock getCurrentTime(GenericKey k) {
+    public VectorClock getCurrentTime(GenericKey k) throws RemoteException {
         VectorClock objectUpdateTime = new VectorClock();
         try (AcquiredLock locked = new AcquireReadLock()) {
             objectUpdateTime = ObjectTable.get(KeyTable.get(k)).lastUpdateTime;
@@ -310,32 +310,32 @@ public class VectorClockBackend extends AntidoteBackend {
     }
 
     @Override
-    public void newObject(GenericKey k, String r) {
+    public void newObject(GenericKey k, String r) throws RemoteException {
         RestrictionManager.newObject(k, r);
     }
 
     @Override
-    public String readLockRestriction(GenericKey k) {
+    public String readLockRestriction(GenericKey k) throws RemoteException {
         return RestrictionManager.readLockRestriction(k);
     }
 
     @Override
-    public void readUnlockRestriction(GenericKey k) {
+    public void readUnlockRestriction(GenericKey k) throws RemoteException {
         RestrictionManager.readUnlockRestriction(k);
     }
 
     @Override
-    public void writeLockRestriction(GenericKey k) {
+    public void writeLockRestriction(GenericKey k) throws RemoteException {
         RestrictionManager.writeLockRestriction(k);
     }
 
     @Override
-    public void writeUnlockRestriction(GenericKey k) {
+    public void writeUnlockRestriction(GenericKey k) throws RemoteException {
         RestrictionManager.writeUnlockRestriction(k);
     }
 
     @Override
-    public void setBlockUntilTime(GenericKey k, VectorClock block_time, String new_restriction) {
+    public void setBlockUntilTime(GenericKey k, VectorClock block_time, String new_restriction) throws RemoteException {
         RestrictionManager.setBlockUntilTime(k, block_time, new_restriction, LastUpdateTime);
     }
 

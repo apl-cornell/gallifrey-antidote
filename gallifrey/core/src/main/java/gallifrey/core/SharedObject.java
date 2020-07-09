@@ -42,7 +42,7 @@ public class SharedObject implements Serializable {
         return frontend;
     }
 
-    private static RMIInterface getBackend() {
+    public static RMIInterface getBackend() {
         if (rmiBackend == null) {
             try {
                 String antidote_backend = System.getenv("ANTIDOTE_BACKEND");
@@ -86,10 +86,6 @@ public class SharedObject implements Serializable {
 
         // Tell antidote about this new shared object
         getFrontend().static_send(key, crdt);
-    }
-
-    public void change_merge_strategy(MergeComparator merge_strategy) {
-        this.merge_strategy = merge_strategy;
     }
 
     // c.func();
@@ -151,8 +147,11 @@ public class SharedObject implements Serializable {
         // TODO
         return this;
     }
-
-    public void release_current_restriction_lock(MatchLocked ml) {
-        // TODO
-    }
+    /*
+     * TODO the transition function above could return void and we could manage use
+     * this function/the initializer to manage the merge_strategy. Instead, the
+     * compiler generates this code because compiler writers like to make their life
+     * more difficult public void change_merge_strategy(MergeComparator
+     * merge_strategy) { this.merge_strategy = merge_strategy; }
+     */
 }

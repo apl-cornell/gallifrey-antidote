@@ -1,8 +1,10 @@
 package gallifrey.core;
 
+import java.rmi.RemoteException;
+
 public class MatchLocked implements AutoCloseable {
-    final private String current_restriction;
-    final private SharedObject locked_object;
+    private String current_restriction;
+    private SharedObject locked_object;
 
     public String get_restriction_name() {
         return current_restriction;
@@ -10,11 +12,23 @@ public class MatchLocked implements AutoCloseable {
 
     @Override
     public void close() {
-        locked_object.release_current_restriction_lock(this);
+        try {
+            SharedObject.getBackend().readUnlockRestriction(locked_object.key);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.exit(333);
+        }
     }
 
     public MatchLocked(final String current_restriction, final SharedObject locked_object) {
-        this.current_restriction = current_restriction;
-        this.locked_object = locked_object;
+        try {
+            this.current_restriction = SharedObject.getBackend().readLockRestriction(locked_object.key);
+            this.locked_object = locked_object;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.exit(999);
+            this.current_restriction = null;
+            this.locked_object = null;
+        }
     }
 }
