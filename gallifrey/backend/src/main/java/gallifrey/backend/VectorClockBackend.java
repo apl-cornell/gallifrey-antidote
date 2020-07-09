@@ -32,6 +32,7 @@ public class VectorClockBackend extends AntidoteBackend {
     OtpErlangBinary LastDownstreamJavaId;
     VectorClock LastDownstreamTime = new VectorClock();
     VectorClock LastUpdateTime = new VectorClock();
+    BackendRestrictionManager RestrictionManager = new BackendRestrictionManager();
 
     ReadWriteLock update_lock = new ReentrantReadWriteLock();
 
@@ -102,7 +103,7 @@ public class VectorClockBackend extends AntidoteBackend {
                     MisssingObjectTable.remove(JavaObjectId);
                 }
 
-                Snapshot mapentry = new Snapshot(crdt_object, e_set);
+                Snapshot mapentry = new Snapshot(crdt_object, e_set, new VectorClock());
                 ObjectTable.put(JavaObjectId, mapentry);
                 KeyTable.put(crdt_object.key, JavaObjectId);
             } catch (ClassCastException e) {
@@ -124,8 +125,10 @@ public class VectorClockBackend extends AntidoteBackend {
             try (AcquiredLock locked = new AcquireWriteLock()) {
                 GenericEffect updateEffect = (GenericEffect) binary.getObject();
                 LastUpdateTime.updateClock(updateEffect.time);
-                MergeSortedSet sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
+                Snapshot snap = ObjectTable.get(JavaObjectId);
+                MergeSortedSet sortedEffectSet = snap.effectbuffer;
                 sortedEffectSet.add(updateEffect);
+                snap.lastUpdateTime.updateClock(updateEffect.time);
             } catch (ClassCastException e) {
                 /* intentionally ignore this exception */
                 // This happens because we don't have an Idset for crdt initializations through
@@ -198,7 +201,7 @@ public class VectorClockBackend extends AntidoteBackend {
             }
 
             newJavaId = newJavaObjectId();
-            new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);
+            new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer, mapentry.lastUpdateTime);
         }
 
         try (AcquiredLock locked = new AcquireWriteLock()) {
@@ -294,6 +297,36 @@ public class VectorClockBackend extends AntidoteBackend {
             }
         }
         return JavaObjectId;
+    }
+
+    @Override
+    public VectorClock getCurrentTime(GenericKey k) {
+        VectorClock objectUpdateTime = new VectorClock();
+        try (AcquiredLock locked = new AcquireReadLock()) {
+            objectUpdateTime = ObjectTable.get(KeyTable.get(k)).lastUpdateTime;
+        }
+
+        return objectUpdateTime;
+    }
+
+    @Override
+    public void newObject(GenericKey k, String r) {
+        RestrictionManager.newObject(k, r);
+    }
+
+    @Override
+    public String readLockRestriction(GenericKey k) {
+        return RestrictionManager.readLockRestriction(k);
+    }
+
+    @Override
+    public void readUnlockRestriction(GenericKey k) {
+        RestrictionManager.readUnlockRestriction(k);
+    }
+
+    @Override
+    public void setBlockUntilTime(GenericKey k, VectorClock block_time, String new_restriction) {
+        RestrictionManager.setBlockUntilTime(k, block_time, new_restriction, LastUpdateTime);
     }
 
     public static void main(String[] args) {

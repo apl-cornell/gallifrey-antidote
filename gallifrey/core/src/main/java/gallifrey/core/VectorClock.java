@@ -44,7 +44,7 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         return val;
     }
 
-    public void updateClock(VectorClock c) {
+    public synchronized void updateClock(VectorClock c) {
         for (String key : c.vectorclock.keySet()) {
             if (c.get(key).compareTo(this.get(key)) == 1) { // greater than
                 this.vectorclock.put(key, c.get(key));
@@ -52,7 +52,7 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         }
     }
 
-    public boolean lessthan(VectorClock c) {
+    public synchronized boolean lessthan(VectorClock c) {
         if (c.vectorclock.keySet().isEmpty() && this.vectorclock.keySet().isEmpty()) {
             return false;
         }
@@ -64,12 +64,12 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         return true;
     }
 
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         return this.vectorclock.isEmpty();
     }
 
     @Override
-    public int compareTo(VectorClock c) {
+    public synchronized int compareTo(VectorClock c) {
         if (this.lessthan(c)) {
             return -1;
         }

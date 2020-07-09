@@ -35,7 +35,7 @@ public class SnapshotSerializationTest {
             GenericEffect eff = new GenericEffect(func, time);
             MergeSortedSet sortedEffectSet = new MergeSortedSet();
             sortedEffectSet.add(eff);
-            Snapshot obj = new Snapshot(crdt, sortedEffectSet);
+            Snapshot obj = new Snapshot(crdt, sortedEffectSet, time);
             FileOutputStream fout = new FileOutputStream("file.txt");
             ObjectOutputStream oos = new ObjectOutputStream(fout);
             oos.writeObject(obj);
@@ -50,6 +50,8 @@ public class SnapshotSerializationTest {
             assertEquals(((Counter) obj.crdt.shared_object).value(), ((Counter) obj2.crdt.shared_object).value());
 
             assertEquals(obj.effectbuffer.size(), obj2.effectbuffer.size());
+
+            assertEquals(obj.lastUpdateTime.vectorclock.entrySet(), obj2.lastUpdateTime.vectorclock.entrySet());
 
             ArrayList<GenericEffect> effectSet1 = obj.effectbuffer.toArrayList();
             ArrayList<GenericEffect> effectSet2 = obj2.effectbuffer.toArrayList();
