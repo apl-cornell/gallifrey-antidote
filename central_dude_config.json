@@ -1,0 +1,10 @@
+{
+    "Frontends": [
+        {
+            "hostname": "localhost",
+            "port": "8087"
+        }
+    ],
+    "Bucket": "my_bucket",
+    "Backends": ["/JavaBackend"]
+}

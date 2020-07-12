@@ -2,6 +2,7 @@ package gallifrey.core;
 
 import java.util.Map.Entry;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.Set;
 import java.io.Serializable;
@@ -88,5 +89,27 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
             }
         }
         return 0;
+    }
+
+    // Returns a new vectorclock that is the max time of all all the vectorclocks
+    public static VectorClock max(List<VectorClock> v_list) {
+        VectorClock result = new VectorClock();
+
+        // Get all keys
+        Set<String> allkeys = new TreeSet<String>();
+        for (VectorClock v : v_list) {
+            allkeys.addAll(v.vectorclock.keySet());
+        }
+
+        // Find the max time for each key
+        for (String s : allkeys) {
+            for (VectorClock v : v_list) {
+                if (result.get(s).compareTo(v.get(s)) > 0) {
+                    result.vectorclock.put(s, v.get(s));
+                }
+            }
+        }
+
+        return result;
     }
 }

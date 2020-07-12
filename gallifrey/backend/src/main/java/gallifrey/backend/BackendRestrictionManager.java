@@ -59,7 +59,8 @@ public class BackendRestrictionManager {
             VectorClock LastUpdateTime) {
         assert (map.containsKey(k));
         WriteLock l = map.get(k).rwl.writeLock();
-        l.lock();
+        // This should already be held as we are in the process of concluding the transisiton
+        assert(l.getHoldCount() > 0);
 
         // Wait till the backend last update vectorclock gets past the block time
         while (!LastUpdateTime.lessthan(block_time)) {

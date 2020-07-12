@@ -17,6 +17,7 @@ public class SharedObject implements Serializable {
     private static final long serialVersionUID = 17L;
     private static Frontend frontend;
     private static RMIInterface rmiBackend;
+    private static CentralDudeInterface centralDude;
     public GenericKey key;
     public MergeComparator merge_strategy;
 
@@ -57,6 +58,24 @@ public class SharedObject implements Serializable {
             }
         }
         return rmiBackend;
+    }
+
+    private static CentralDudeInterface getCentralDude() {
+        if (centralDude == null) {
+            try {
+                String central_dude_name = System.getenv("CENTRAL_DUDE");
+                if (central_dude_name == null) {
+                    central_dude_name = "/JavaBackend";
+                }
+                centralDude = (CentralDudeInterface) Naming.lookup(central_dude_name);
+            } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                System.out.println("Something happend when trying to look up the central dude");
+                e.printStackTrace();
+                // 64 75 64 65
+                System.exit(64756465);
+            }
+        }
+        return centralDude;
     }
 
     // Shared[increment] Counter c = new Counter();
@@ -144,7 +163,13 @@ public class SharedObject implements Serializable {
     }
 
     public SharedObject transition(String name) {
-        // TODO
+        try {
+            getCentralDude().transition(this.key, name);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.exit(111);
+        }
+
         return this;
     }
     /*
