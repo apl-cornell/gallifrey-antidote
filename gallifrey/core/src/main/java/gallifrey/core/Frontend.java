@@ -75,6 +75,12 @@ public class Frontend {
     private ByteString doRead(TransactionWithReads tx, GenericKey k) {
         try {
             ByteString s;
+            if (tx == null) {
+                System.out.println("Transaction is null");
+            }
+            if (k == null) {
+                System.out.println("Key is null");
+            }
             while ((s = bucket.read(tx, k)) == null) {
                 /* Try again */
                 /* Strangely this can return null */

@@ -24,6 +24,9 @@ public class BidirectionalMapSerializationTest {
             GenericKey key = Key.generic(byte_key);
             String s = "Hello";
             OtpErlangBinary value = new OtpErlangBinary(s);
+            if (key == null) {
+                throw new RuntimeException();
+            }
             obj.put(key, value);
 
             FileOutputStream fout = new FileOutputStream("file.txt");

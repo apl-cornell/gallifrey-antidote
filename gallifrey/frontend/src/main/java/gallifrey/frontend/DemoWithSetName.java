@@ -17,11 +17,12 @@ public class DemoWithSetName {
         SharedObject obj = new SharedObject(counter, key);
         System.out.print("The start value of this counter is: ");
         System.out.println(obj.const_call("value"));
-        for (int i = 1; i <= 10000; i++) {
+        for (int i = 1; i <= 1000000; i++) {
             List<Object> args1 = new ArrayList<Object>();
             args1.add(i + 1);
             obj.void_call("increment", args1);
             List<Object> args3 = new ArrayList<Object>();
+            obj.const_call("value");
             args3.add(i);
             obj.void_call("decrement", args3);
         }
