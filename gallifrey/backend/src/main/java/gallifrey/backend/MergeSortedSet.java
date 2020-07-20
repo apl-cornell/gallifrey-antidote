@@ -11,7 +11,7 @@ import gallifrey.core.CloseableRWLocks;
 
 // A growth only Set which attempts to use the MergeComparator to order operations when operations are concurrrent
 // Implementes Iterable over Set because this is specifically a set for GenericFunctions and it seemed pointless to implement functions we probably wouldn't use.
-public class MergeSortedSet implements Iterable<GenericEffect>, Serializable {
+public class MergeSortedSet implements Serializable {
     private static final long serialVersionUID = 42L;
 
     MergeComparator currentMergeStrategy = null;
@@ -79,16 +79,24 @@ public class MergeSortedSet implements Iterable<GenericEffect>, Serializable {
     public ArrayList<GenericEffect> toArrayList() {
         try (CloseableRWLocks.AcquiredLock locked = lock.read_lock()) {
             ArrayList<GenericEffect> acc = new ArrayList<>();
-            for (GenericEffect e : this) {
-                acc.add(e);
+            try (It it = get_iterator()) {
+                for (GenericEffect e : it) {
+                    acc.add(e);
+                }
             }
             return acc;
         }
     }
 
-    public Iterator<GenericEffect> iterator() {
-        try (CloseableRWLocks.AcquiredLock locked = lock.read_lock()) {
+    public class It implements Iterable<GenericEffect>, AutoCloseable {
+
+        private CloseableRWLocks.AcquiredLock locked = lock.read_lock();
+
+        public Iterator<GenericEffect> iterator() {
+
             Iterator<GenericEffect> it = new Iterator<GenericEffect>() {
+
+                // To do: read-lock this collection for as long as this iterator is alive.
 
                 private Iterator<TreeSet<GenericEffect>> group_iterator = grouped_by_merge_strategy.iterator();
                 private Iterator<GenericEffect> current_iterator = group_iterator.next().iterator();
@@ -114,5 +122,14 @@ public class MergeSortedSet implements Iterable<GenericEffect>, Serializable {
             };
             return it;
         }
+
+        public void close() {
+            locked.close();
+        }
     }
+
+    public It get_iterator() {
+        return new It();
+    }
+
 }

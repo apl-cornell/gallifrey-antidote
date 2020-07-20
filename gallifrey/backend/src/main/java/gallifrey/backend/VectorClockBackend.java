@@ -146,15 +146,17 @@ public class VectorClockBackend extends AntidoteBackend {
         MergeSortedSet crdt_effect_buffer = mapentry.effectbuffer;
         MergeSortedSet new_crdt_effect_buffer = new MergeSortedSet();
 
-        for (GenericEffect e : crdt_effect_buffer) {
-            // Use a correct compare based on types
-            if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
-                    || this.GlobalClockTime.isEmpty()) {
-                new_crdt_object.invoke((GenericFunction) e.func);
-            } else {
-                // Because I can't do concurrent modicifations to the treeset, add to a new one
-                // and replace
-                new_crdt_effect_buffer.add(e);
+        try (MergeSortedSet.It getit = crdt_effect_buffer.get_iterator()) {
+            for (GenericEffect e : getit) {
+                // Use a correct compare based on types
+                if (e.time.lessthan(this.GlobalClockTime) || (0 == e.time.compareTo(this.GlobalClockTime))
+                        || this.GlobalClockTime.isEmpty()) {
+                    new_crdt_object.invoke((GenericFunction) e.func);
+                } else {
+                    // Because I can't do concurrent modicifations to the treeset, add to a new one
+                    // and replace
+                    new_crdt_effect_buffer.add(e);
+                }
             }
         }
 
@@ -180,8 +182,10 @@ public class VectorClockBackend extends AntidoteBackend {
 
         // Add effects to a throwaway object to get the value
         CRDT temp_crdt_object = crdt_object.deepClone();
-        for (GenericEffect e : ObjectTable.get(JavaObjectId).effectbuffer) {
-            temp_crdt_object.invoke((GenericFunction) e.func);
+        try (MergeSortedSet.It getit = ObjectTable.get(JavaObjectId).effectbuffer.get_iterator()) {
+            for (GenericEffect e : getit) {
+                temp_crdt_object.invoke((GenericFunction) e.func);
+            }
         }
 
         return temp_crdt_object.invoke(func);
@@ -195,7 +199,7 @@ public class VectorClockBackend extends AntidoteBackend {
 
         sleep_decision = LastUpdateTime.lessthan(currentDownstreamTime);
 
-        if (sleep_decision) {
+        if (false && sleep_decision) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -214,8 +218,7 @@ public class VectorClockBackend extends AntidoteBackend {
     public Object rmiOperation(GenericKey key, GenericFunction func, VectorClock DownstreamTime)
             throws RemoteException {
         boolean sleep_decision = false;
-
-        sleep_decision = LastUpdateTime.lessthan(DownstreamTime);
+        sleep_decision = false && LastUpdateTime.lessthan(DownstreamTime);
 
         while (sleep_decision) {
 
