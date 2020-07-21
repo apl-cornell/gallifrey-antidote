@@ -53,6 +53,8 @@ project(':gallifrey:backend') {
             println String.valueOf(System.getenv('EXTERNAL_CLASSES'))
         } */
         enableAssertions = true
+/*         jvmArgs = ['-XX:+UseSerialGC'] */
+        jvmArgs = ['-XX:+UseG1GC']
 
         main = project.hasProperty("mainClass") ? getProperty("mainClass") : "NULL"
         classpath = sourceSets.main.runtimeClasspath

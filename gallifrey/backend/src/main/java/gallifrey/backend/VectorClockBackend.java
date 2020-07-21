@@ -13,6 +13,8 @@ import com.ericsson.otp.erlang.OtpErlangMap;
 
 import eu.antidotedb.client.GenericKey;
 
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -269,6 +271,10 @@ public class VectorClockBackend extends AntidoteBackend {
             target = "antidote@127.0.0.1";
         }
         try {
+            System.out.println("For garbage collection, using:");
+            for (GarbageCollectorMXBean gcMxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+                System.out.println(gcMxBean.getObjectName());
+            }
             VectorClockBackend backend = new VectorClockBackend(nodename, "javamailbox", "antidote");
             LocateRegistry.createRegistry(1099); // 1099 is the default port
             String java_hostname = System.getenv("JAVA_HOSTNAME");
