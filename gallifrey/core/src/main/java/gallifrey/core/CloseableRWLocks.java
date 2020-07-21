@@ -5,7 +5,7 @@ import java.io.*;
 
 public class CloseableRWLocks implements Serializable {
 
-    ReadWriteLock update_lock = new ReentrantReadWriteLock();
+    ReadWriteLock update_lock = new ReentrantReadWriteLock(true);
 
     public interface AcquiredLock extends AutoCloseable {
 
