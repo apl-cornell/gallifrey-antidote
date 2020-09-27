@@ -1,4 +1,4 @@
-package gallifrey.backend;
+package gallifrey.core;
 
 import java.io.Serializable;
 import java.util.Iterator;

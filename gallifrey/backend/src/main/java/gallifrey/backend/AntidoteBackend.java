@@ -20,10 +20,7 @@ import eu.antidotedb.client.GenericKey;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-import gallifrey.core.RMIInterface;
-import gallifrey.core.VectorClock;
-import gallifrey.core.BackendRequiresFlushException;
-import gallifrey.core.GenericFunction;
+import gallifrey.core.*;
 
 abstract class AntidoteBackend extends UnicastRemoteObject implements Runnable, RMIInterface {
     private static final long serialVersionUID = 15L;
@@ -106,10 +103,9 @@ abstract class AntidoteBackend extends UnicastRemoteObject implements Runnable, 
     // not be equal to an crdt snapshot
     public abstract OtpErlangBinary loadSnapshot(OtpErlangBinary JavaObjectId, OtpErlangBinary binary);
 
-    public abstract Object rmiOperation(GenericKey k, GenericFunction f)
-            throws RemoteException, BackendRequiresFlushException;
+    public abstract Snapshot rmiOperation(GenericKey k) throws RemoteException, BackendRequiresFlushException;
 
-    public abstract Object rmiOperation(GenericKey k, GenericFunction f, VectorClock v) throws RemoteException;
+    public abstract Snapshot rmiOperation(GenericKey k, VectorClock v) throws RemoteException;
 
     public void run() {
         System.out.println(myOtpNode);

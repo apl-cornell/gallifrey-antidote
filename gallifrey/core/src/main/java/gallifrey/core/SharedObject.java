@@ -126,11 +126,27 @@ public class SharedObject implements Serializable {
         getFrontend().static_read(key);
         GenericFunction func = new GenericFunction(FunctionName, merge_strategy, Arguments);
         try {
-            return getBackend().rmiOperation(this.key, func);
+            Snapshot snapshot = getBackend().rmiOperation(this.key);
+            MergeSortedSet effectbuffer = snapshot.effectbuffer;
+            CRDT crdt = snapshot.crdt;
+            try (MergeSortedSet.It getit = effectbuffer.get_iterator()) {
+                for (GenericEffect e : getit) {
+                    crdt.invoke((GenericFunction) e.func);
+                }
+            }
+            return crdt.invoke(func);
         } catch (BackendRequiresFlushException b) {
             getFrontend().static_read(b.key);
             try {
-                return getBackend().rmiOperation(this.key, func, b.time);
+                Snapshot snapshot = getBackend().rmiOperation(this.key, b.time);
+                MergeSortedSet effectbuffer = snapshot.effectbuffer;
+                CRDT crdt = snapshot.crdt;
+                try (MergeSortedSet.It getit = effectbuffer.get_iterator()) {
+                    for (GenericEffect e : getit) {
+                        crdt.invoke((GenericFunction) e.func);
+                    }
+                }
+                return crdt.invoke(func);
             } catch (RemoteException e) {
                 e.printStackTrace();
                 System.exit(99);

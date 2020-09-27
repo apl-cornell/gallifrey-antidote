@@ -1,9 +1,6 @@
 package gallifrey.backend;
 
-import java.util.Hashtable;
-import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.locks.*;
 import java.util.concurrent.*;
 
 import com.ericsson.otp.erlang.OtpErlangBinary;
@@ -20,10 +17,7 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 
-import gallifrey.core.BackendRequiresFlushException;
-import gallifrey.core.CRDT;
-import gallifrey.core.VectorClock;
-import gallifrey.core.GenericFunction;
+import gallifrey.core.*;
 
 public class VectorClockBackend extends AntidoteBackend {
     private static final long serialVersionUID = 16L;
@@ -83,7 +77,6 @@ public class VectorClockBackend extends AntidoteBackend {
                     e_set.add(updateEffect);
                 } else {
                     throw new NoSuchObjectException();
-
                 }
             }
         } else {
@@ -174,28 +167,29 @@ public class VectorClockBackend extends AntidoteBackend {
         return new_antidote_snapshot;
     }
 
-    public Object doRmiOperation(GenericKey key, GenericFunction func) {
+    public Snapshot doRmiOperation(GenericKey key) {
         OtpErlangBinary JavaObjectId;
         Snapshot mapentry;
         CRDT crdt_object;
         JavaObjectId = KeyTable.get(key);
-        mapentry = ObjectTable.get(JavaObjectId);
-        crdt_object = mapentry.crdt;
+        // mapentry = ObjectTable.get(JavaObjectId);
+        return ObjectTable.get(JavaObjectId);
+        // crdt_object = mapentry.crdt;
 
         // Add effects to a throwaway object to get the value
-        CRDT temp_crdt_object = crdt_object.deepClone();
-        try (MergeSortedSet.It getit = ObjectTable.get(JavaObjectId).effectbuffer.get_iterator()) {
-            for (GenericEffect e : getit) {
-                temp_crdt_object.invoke((GenericFunction) e.func);
-            }
-        }
-
-        return temp_crdt_object.invoke(func);
+        // CRDT temp_crdt_object = crdt_object.deepClone();
+        // try (MergeSortedSet.It getit =
+        // ObjectTable.get(JavaObjectId).effectbuffer.get_iterator()) {
+        // for (GenericEffect e : getit) {
+        // temp_crdt_object.invoke((GenericFunction) e.func);
+        // }
+        // }
+        //
+        // return temp_crdt_object.invoke(func);
     }
 
     @Override
-    public Object rmiOperation(GenericKey key, GenericFunction func)
-            throws RemoteException, BackendRequiresFlushException {
+    public Snapshot rmiOperation(GenericKey key) throws RemoteException, BackendRequiresFlushException {
         VectorClock currentDownstreamTime = LastDownstreamTime;
         boolean sleep_decision = false;
 
@@ -213,12 +207,11 @@ public class VectorClockBackend extends AntidoteBackend {
 
         }
 
-        return doRmiOperation(key, func);
+        return doRmiOperation(key);
     }
 
     @Override
-    public Object rmiOperation(GenericKey key, GenericFunction func, VectorClock DownstreamTime)
-            throws RemoteException {
+    public Snapshot rmiOperation(GenericKey key, VectorClock DownstreamTime) throws RemoteException {
         boolean sleep_decision = false;
         sleep_decision = false && LastUpdateTime.lessthan(DownstreamTime);
 
@@ -232,7 +225,7 @@ public class VectorClockBackend extends AntidoteBackend {
             }
         }
 
-        return doRmiOperation(key, func);
+        return doRmiOperation(key);
     }
 
     @Override

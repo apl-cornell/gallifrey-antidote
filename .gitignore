@@ -4,6 +4,7 @@ file.txt
 # IDE things
 .vscode/
 .settings
+.idea/
 
 # Erlang ignore files
 .eunit

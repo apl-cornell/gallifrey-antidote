@@ -1,4 +1,4 @@
-package gallifrey.backend;
+package gallifrey.core;
 
 import gallifrey.core.GenericFunction;
 import gallifrey.core.VectorClock;
