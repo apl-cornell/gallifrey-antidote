@@ -172,20 +172,7 @@ public class VectorClockBackend extends AntidoteBackend {
         Snapshot mapentry;
         CRDT crdt_object;
         JavaObjectId = KeyTable.get(key);
-        // mapentry = ObjectTable.get(JavaObjectId);
         return ObjectTable.get(JavaObjectId);
-        // crdt_object = mapentry.crdt;
-
-        // Add effects to a throwaway object to get the value
-        // CRDT temp_crdt_object = crdt_object.deepClone();
-        // try (MergeSortedSet.It getit =
-        // ObjectTable.get(JavaObjectId).effectbuffer.get_iterator()) {
-        // for (GenericEffect e : getit) {
-        // temp_crdt_object.invoke((GenericFunction) e.func);
-        // }
-        // }
-        //
-        // return temp_crdt_object.invoke(func);
     }
 
     @Override
