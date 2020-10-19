@@ -1,5 +1,7 @@
 package gallifrey.backend;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 
@@ -63,7 +65,7 @@ public class VectorClockBackend extends AntidoteBackend {
                     MisssingObjectTable.remove(JavaObjectId);
                 }
 
-                Snapshot mapentry = new Snapshot(crdt_object, e_set);
+                Snapshot mapentry = new Snapshot(crdt_object, e_set, JavaObjectId);
                 ObjectTable.put(JavaObjectId, mapentry);
                 KeyTable.put(crdt_object.key, JavaObjectId);
             } catch (ClassCastException e) {
@@ -81,6 +83,10 @@ public class VectorClockBackend extends AntidoteBackend {
             }
         } else {
             try {
+                // This represents a delta
+                // the idea; this update applies an operation to the meresorted set.
+                // the client can hang on to the old mergesortedset, and request a delta at
+                // which point they should see only the new operations
                 GenericEffect updateEffect = (GenericEffect) binary.getObject();
                 LastUpdateTime.updateClock(updateEffect.time);
                 MergeSortedSet sortedEffectSet = ObjectTable.get(JavaObjectId).effectbuffer;
@@ -156,7 +162,7 @@ public class VectorClockBackend extends AntidoteBackend {
         }
 
         newJavaId = newJavaObjectId();
-        new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer);
+        new_snapshot = new Snapshot(new_crdt_object, new_crdt_effect_buffer, newJavaId);
         ObjectTable.put(newJavaId, new_snapshot);
         KeyTable.put(new_crdt_object.key, newJavaId);
 
@@ -167,16 +173,37 @@ public class VectorClockBackend extends AntidoteBackend {
         return new_antidote_snapshot;
     }
 
-    public Snapshot doRmiOperation(GenericKey key) {
-        OtpErlangBinary JavaObjectId;
-        Snapshot mapentry;
-        CRDT crdt_object;
-        JavaObjectId = KeyTable.get(key);
-        return ObjectTable.get(JavaObjectId);
+    public Snapshot doRmiOperation(GenericKey key, List<VectorClock> frontier, OtpErlangBinary objectid) {
+        if (objectid != null && KeyTable.get(key) == objectid) {
+            // crdt has not updated, return new effects
+            Snapshot snapshot = ObjectTable.get(objectid);
+            ArrayList<GenericEffect> delta = new ArrayList<GenericEffect>();
+            try (MergeSortedSet.It getit = snapshot.effectbuffer.get_iterator()) {
+                outer: for (GenericEffect e : getit) {
+                    for (VectorClock time : frontier) {
+                        if (e.time.lessthan(time)) {
+                            break outer;
+                        }
+                    }
+                    delta.add(e);
+                }
+            }
+            snapshot = new Snapshot(snapshot.crdt, new MergeSortedSet(), objectid);
+            snapshot.addEffects(delta);
+            return snapshot;
+        } else {
+            // initialization or new crdt, return new snapshot
+            OtpErlangBinary newObjectid = KeyTable.get(key);
+            Snapshot snapshot = ObjectTable.get(newObjectid);
+            // probably unnecessary
+            snapshot.objectid = newObjectid;
+            return snapshot;
+        }
     }
 
     @Override
-    public Snapshot rmiOperation(GenericKey key) throws RemoteException, BackendRequiresFlushException {
+    public Snapshot rmiOperation(GenericKey key, List<VectorClock> frontier, OtpErlangBinary objectid)
+            throws RemoteException, BackendRequiresFlushException {
         VectorClock currentDownstreamTime = LastDownstreamTime;
         boolean sleep_decision = false;
 
@@ -194,11 +221,12 @@ public class VectorClockBackend extends AntidoteBackend {
 
         }
 
-        return doRmiOperation(key);
+        return doRmiOperation(key, frontier, objectid);
     }
 
     @Override
-    public Snapshot rmiOperation(GenericKey key, VectorClock DownstreamTime) throws RemoteException {
+    public Snapshot rmiOperation(GenericKey key, List<VectorClock> frontier, OtpErlangBinary objectid,
+            VectorClock DownstreamTime) throws RemoteException {
         boolean sleep_decision = false;
         sleep_decision = false && LastUpdateTime.lessthan(DownstreamTime);
 
@@ -212,7 +240,7 @@ public class VectorClockBackend extends AntidoteBackend {
             }
         }
 
-        return doRmiOperation(key);
+        return doRmiOperation(key, frontier, objectid);
     }
 
     @Override

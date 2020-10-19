@@ -2,6 +2,7 @@ package gallifrey.core;
 
 import eu.antidotedb.client.GenericKey;
 
+import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class SharedObject implements Serializable {
     private static final long serialVersionUID = 17L;
     private static Frontend frontend;
     private static RMIInterface rmiBackend;
+    private static Snapshot objectSnapshot;
     public GenericKey key;
     public MergeComparator merge_strategy;
 
@@ -57,6 +59,62 @@ public class SharedObject implements Serializable {
             }
         }
         return rmiBackend;
+    }
+
+    private Object getSnapshot(GenericFunction func, VectorClock downstreamTime) throws BackendRequiresFlushException {
+        // get the causal frontier of the current snapshot's effects
+        ArrayList<VectorClock> frontier = new ArrayList<VectorClock>();
+        if (this.objectSnapshot != null) {
+            try (MergeSortedSet.It getit = this.objectSnapshot.effectbuffer.get_iterator()) {
+                for (GenericEffect e : getit) {
+                    if (frontier.isEmpty()) {
+                        // initialize if empty
+                        frontier.add(e.time);
+                    } else if (frontier.get(0).lessthan(e.time)) {
+                        // if we found an event with a greater time than the entire frontier, clear it
+                        // and add the new event
+                        frontier.clear();
+                        frontier.add(e.time);
+                    } else if (!e.time.lessthan(frontier.get(0))) {
+                        // e.time is concurrent with the entries in the ArrayList, so add it
+                        frontier.add(e.time);
+                    }
+                    // otherwise, it is less than and we ignore it
+                }
+            }
+        }
+
+        // Flushes any waithing operations to the backend
+        getFrontend().static_read(key);
+        Snapshot snapshot;
+        try {
+            if (objectSnapshot == null) {
+                snapshot = getBackend().rmiOperation(this.key, frontier, null);
+            } else if (downstreamTime == null) {
+                snapshot = getBackend().rmiOperation(this.key, frontier, objectSnapshot.objectid);
+            } else {
+                snapshot = getBackend().rmiOperation(this.key, frontier, objectSnapshot.objectid, downstreamTime);
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.exit(99);
+            return null;
+        }
+        if (objectSnapshot != null || snapshot.crdt == null) {
+            // backend hasn't coordinated and only has new events for us
+            this.objectSnapshot.addEffects(snapshot.effectbuffer.toArrayList());
+        } else {
+            // otherwise, the backend successfully coordinated and has a new crdt for us
+            this.objectSnapshot = snapshot;
+        }
+        CRDT crdt = this.objectSnapshot.crdt;
+        MergeSortedSet effectbuffer = this.objectSnapshot.effectbuffer;
+        try (MergeSortedSet.It getit = effectbuffer.get_iterator()) {
+            for (GenericEffect e : getit) {
+                crdt.invoke((GenericFunction) e.func);
+            }
+        }
+        return crdt.invoke(func);
     }
 
     // Shared[increment] Counter c = new Counter();
@@ -122,40 +180,18 @@ public class SharedObject implements Serializable {
     // ->
     // (Object) s.const_call("doSomethingSideEffectFree", [arg1, arg2, ...]);
     public Object const_call(String FunctionName, List<Object> Arguments) {
-        // Flushes any waithing operations to the backend
-        getFrontend().static_read(key);
         GenericFunction func = new GenericFunction(FunctionName, merge_strategy, Arguments);
         try {
-            Snapshot snapshot = getBackend().rmiOperation(this.key);
-            MergeSortedSet effectbuffer = snapshot.effectbuffer;
-            CRDT crdt = snapshot.crdt;
-            try (MergeSortedSet.It getit = effectbuffer.get_iterator()) {
-                for (GenericEffect e : getit) {
-                    crdt.invoke((GenericFunction) e.func);
-                }
-            }
-            return crdt.invoke(func);
+            return this.getSnapshot(func, null);
         } catch (BackendRequiresFlushException b) {
-            getFrontend().static_read(b.key);
             try {
-                Snapshot snapshot = getBackend().rmiOperation(this.key, b.time);
-                MergeSortedSet effectbuffer = snapshot.effectbuffer;
-                CRDT crdt = snapshot.crdt;
-                try (MergeSortedSet.It getit = effectbuffer.get_iterator()) {
-                    for (GenericEffect e : getit) {
-                        crdt.invoke((GenericFunction) e.func);
-                    }
-                }
-                return crdt.invoke(func);
-            } catch (RemoteException e) {
+                return this.getSnapshot(func, b.time);
+            } catch (BackendRequiresFlushException e) {
+                // shouldn't happen
                 e.printStackTrace();
-                System.exit(99);
+                System.exit(100);
                 return null;
             }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            System.exit(22);
-            return null;
         }
     }
 
