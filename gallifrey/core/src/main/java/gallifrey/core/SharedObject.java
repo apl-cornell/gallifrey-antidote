@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.protobuf.ByteString;
+import sun.net.www.content.text.Generic;
 
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -18,7 +19,7 @@ public class SharedObject implements Serializable {
     private static final long serialVersionUID = 17L;
     private static Frontend frontend;
     private static RMIInterface rmiBackend;
-    private static Snapshot objectSnapshot;
+    private Snapshot objectSnapshot;
     public GenericKey key;
     public MergeComparator merge_strategy;
 
@@ -84,7 +85,7 @@ public class SharedObject implements Serializable {
             }
         }
 
-        // Flushes any waithing operations to the backend
+        // Flushes any waiting operations to the backend
         getFrontend().static_read(key);
         Snapshot snapshot;
         try {
@@ -100,12 +101,14 @@ public class SharedObject implements Serializable {
             System.exit(99);
             return null;
         }
-        if (objectSnapshot != null || snapshot.crdt == null) {
-            // backend hasn't coordinated and only has new events for us
-            this.objectSnapshot.addEffects(snapshot.effectbuffer.toArrayList());
-        } else {
-            // otherwise, the backend successfully coordinated and has a new crdt for us
+        if (objectSnapshot == null || snapshot.crdt != null) {
+            // we overwrite the objectSnapshot with the new CRDT
             this.objectSnapshot = snapshot;
+        } else {
+            // otherwise, the backend hasn't coordinated and only has new events for us
+            for (GenericEffect e : snapshot.effectbuffer.get_iterator()) {
+                this.objectSnapshot.effectbuffer.add(e);
+            }
         }
         CRDT crdt = this.objectSnapshot.crdt;
         MergeSortedSet effectbuffer = this.objectSnapshot.effectbuffer;
@@ -172,7 +175,6 @@ public class SharedObject implements Serializable {
     // ->
     // (Object) s.const_call("doSomethingSideEffectFree");
     public Object const_call(String FunctionName) {
-        // Flushes any waithing operations to the backend
         return const_call(FunctionName, new ArrayList<Object>());
     }
 

@@ -22,10 +22,4 @@ public class Snapshot implements Serializable {
         this.crdt = crdt;
         this.effectbuffer = sortedEffectSet;
     }
-
-    public void addEffects(List<GenericEffect> effectList) {
-        for (GenericEffect effect : effectList) {
-            this.effectbuffer.add(effect);
-        }
-    }
 }
